@@ -4786,7 +4786,7 @@
     function formatDriveCoverUrl(url) {
       if (!url) return '';
       url = String(url).trim();
-      if (!url) return '';
+      if (!url || !isHttpsUrl_(url)) return '';
 
       let fileId = '';
       if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
@@ -4796,7 +4796,7 @@
           const match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
           if (match) fileId = match[1];
         }
-        if (fileId) {
+        if (fileId && /^[a-zA-Z0-9_-]+$/.test(fileId)) {
           return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
         }
       }
@@ -4806,6 +4806,7 @@
     function renderModulCard(m, isOwned) {
       const coverSrc = formatDriveCoverUrl(m.cover_url);
       const safeTitle = escapeAttr(m.nama_modul);
+      const safeModulId = escapeAttr(m.modul_id);
       const isSuperAdmin = currentAuthUser && currentAuthUser.role === 'super_admin';
       const hasAccess = isOwned || isSuperAdmin;
       const isSegeraHadir = !hasAccess && isModulSegeraHadir(m.modul_id);
@@ -4824,13 +4825,13 @@
 
       if (hasAccess) {
         badgeHtml = `<span class="badge-dimiliki">✓ Dimiliki</span>`;
-        actionBtn = `<button class="btn-asix-primary" style="font-size: 12px; padding: 7px 14px;" onclick="openModulDetail('${m.modul_id}')">Buka Modul →</button>`;
+        actionBtn = `<button class="btn-asix-primary" style="font-size: 12px; padding: 7px 14px;" onclick="openModulDetail('${safeModulId}')">Buka Modul →</button>`;
       } else if (isSegeraHadir) {
         badgeHtml = `<span class="badge-segera-hadir">⏳ Segera Hadir</span>`;
         actionBtn = `<button type="button" class="btn-segera-hadir" disabled>Segera Hadir</button>`;
       } else {
         badgeHtml = `<span class="badge-terkunci">🔒 Terkunci</span>`;
-        actionBtn = `<button class="btn-asix-secondary" style="font-size: 12px; padding: 7px 14px;" onclick="openModulDetail('${m.modul_id}')">Preview & Beli Modul</button>`;
+        actionBtn = `<button class="btn-asix-secondary" style="font-size: 12px; padding: 7px 14px;" onclick="openModulDetail('${safeModulId}')">Preview & Beli Modul</button>`;
       }
 
       return `
@@ -4840,8 +4841,8 @@
             <div class="modul-card-header">
               ${badgeHtml}
             </div>
-            <h3 class="modul-title">${m.nama_modul}</h3>
-            <p class="modul-desc">${m.deskripsi || m.preview_text}</p>
+            <h3 class="modul-title">${escapeHtml(m.nama_modul)}</h3>
+            <p class="modul-desc">${escapeHtml(m.deskripsi || m.preview_text || '')}</p>
             <div class="modul-card-footer">
               ${actionBtn}
             </div>
@@ -4971,12 +4972,14 @@
         ctaBox.style.borderColor = 'var(--asix-orange)';
         ctaBox.style.background = 'var(--asix-orange-light)';
         const targetPaketId = getLynkModulPaketId(m);
+        const rawLynkUrl = getLynkModul(m);
+        const safeLynkUrl = isHttpsUrl_(rawLynkUrl) ? rawLynkUrl : LYNK_URL;
         ctaBox.innerHTML = `
           <h3 style="color: var(--asix-orange); margin-bottom: 6px;">Modul Ini Masih Terkunci 🔒</h3>
           <p style="font-size: 13px; color: var(--asix-black); margin-bottom: 16px;" id="locked-preview-text">${escapeHtml(m.preview_text || 'Beli paket untuk membuka akses materi lengkap.')}</p>
           <div id="locked-package-buttons" style="display: flex; flex-wrap: wrap; gap: 10px;">
             <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start; margin-top: 10px;">
-              <a href="${getLynkModul(m)}" onclick="try{catatEvent('klik_beli', '${targetPaketId}');}catch(e){}" target="_blank" rel="noopener noreferrer" class="btn-asix-primary" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; padding: 11px 20px; font-weight: 600;">
+              <a href="${escapeAttr(safeLynkUrl)}" onclick="try{catatEvent('klik_beli', '${escapeAttr(targetPaketId)}');}catch(e){}" target="_blank" rel="noopener noreferrer" class="btn-asix-primary" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; padding: 11px 20px; font-weight: 600;">
                 Daftar / Pilih Kelas di Lynk.id ↗
               </a>
               <p style="font-size: 12px; color: var(--asix-text-muted); margin: 0;">Setelah daftar, admin akan membuka akses kelas yang kamu pilih.</p>
@@ -4998,15 +5001,15 @@
         accordion.innerHTML = sectionKeys.map((secName, idx) => `
           <div class="curriculum-section">
             <div class="curriculum-section-title">
-              <span>${secName}</span>
+              <span>${escapeHtml(secName)}</span>
               <span style="font-size: 11px; color: var(--asix-text-muted);">${sections[secName].length} Materi</span>
             </div>
             <div>
               ${sections[secName].map(mat => `
-                <div class="materi-row" id="materi-row-${mat.materi_id}" onclick="playMateri('${mat.materi_id}')">
+                <div class="materi-row" id="materi-row-${escapeAttr(mat.materi_id)}" onclick="playMateri('${escapeAttr(mat.materi_id)}')">
                   <div style="display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 0; padding-right: 12px;">
-                    <span style="font-size: 12px; color: var(--asix-text-muted); font-weight: 700; flex-shrink: 0; margin-top: 2px;">#${mat.urutan}</span>
-                    <span style="font-size: 13px; font-weight: 600; line-height: 1.4; word-break: break-word; color: var(--asix-black);">${mat.judul}</span>
+                    <span style="font-size: 12px; color: var(--asix-text-muted); font-weight: 700; flex-shrink: 0; margin-top: 2px;">#${escapeHtml(String(mat.urutan))}</span>
+                    <span style="font-size: 13px; font-weight: 600; line-height: 1.4; word-break: break-word; color: var(--asix-black);">${escapeHtml(mat.judul)}</span>
                   </div>
                   <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
                     ${mat.is_preview ? '<span class="badge-preview" style="font-size: 10px; padding: 2px 6px;">Preview</span>' : ''}
@@ -5030,7 +5033,9 @@
      * Helper parsing embed YouTube, Drive, dan Link Eksternal (Perbaikan 4)
      */
     function parseMateriEmbed(rawUrl) {
-      if (!rawUrl) return { type: 'generic', embedUrl: '', directUrl: '' };
+      if (!rawUrl || !isHttpsUrl_(rawUrl)) {
+        return { type: 'invalid', embedUrl: '', directUrl: '' };
+      }
       let url = String(rawUrl).trim();
 
       // 1. YouTube: watch?v=, youtu.be/, shorts/, embed/
@@ -5050,7 +5055,7 @@
           videoId = part.split('?')[0].split('#')[0];
         }
 
-        if (videoId) {
+        if (videoId && /^[a-zA-Z0-9_-]+$/.test(videoId)) {
           return {
             type: 'youtube',
             embedUrl: `https://www.youtube.com/embed/${videoId}?autoplay=1`,
@@ -5075,7 +5080,7 @@
         };
       }
 
-      // 3. Generic link (misalnya web / peta belajar)
+      // 3. Generic link (hanya jika valid https)
       return {
         type: 'generic',
         embedUrl: url,
@@ -5110,12 +5115,24 @@
       if (!mat.url) {
         const currentModul = (activeModulDetail && activeModulDetail.modul) ? activeModulDetail.modul : null;
         const modulLynkUrl = getLynkModul(currentModul);
+        const safeLynkUrl = isHttpsUrl_(modulLynkUrl) ? modulLynkUrl : LYNK_URL;
         const videoPaketId = getLynkModulPaketId(currentModul);
         box.innerHTML = `
           <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
             <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">🔒 Materi Terkunci</p>
             <p style="font-size: 13px; color: #9CA3AF; margin-bottom: 16px; max-width: 90%;">Materi ini hanya tersedia untuk member pemilik modul.</p>
-            <a href="${modulLynkUrl}" onclick="try{catatEvent('klik_beli', '${videoPaketId}');}catch(e){}" target="_blank" rel="noopener noreferrer" class="btn-asix-primary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">Beli Paket Akses di Lynk.id ↗</a>
+            <a href="${escapeAttr(safeLynkUrl)}" onclick="try{catatEvent('klik_beli', '${escapeAttr(videoPaketId)}');}catch(e){}" target="_blank" rel="noopener noreferrer" class="btn-asix-primary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">Beli Paket Akses di Lynk.id ↗</a>
+          </div>
+        `;
+        if (backupBox) backupBox.innerHTML = '';
+        return;
+      }
+
+      if (!isHttpsUrl_(mat.url)) {
+        box.innerHTML = `
+          <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
+            <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--asix-danger, #EF4444);">⚠️ Link Materi Tidak Valid</p>
+            <p style="font-size: 13px; color: #9CA3AF; margin: 0; max-width: 90%;">Link materi tidak valid atau tidak menggunakan protokol HTTPS yang aman.</p>
           </div>
         `;
         if (backupBox) backupBox.innerHTML = '';
@@ -5127,7 +5144,7 @@
       if (embedInfo.type === 'youtube') {
         box.innerHTML = `
           <iframe 
-            src="${embedInfo.embedUrl}" 
+            src="${escapeAttr(embedInfo.embedUrl)}" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
             referrerpolicy="strict-origin-when-cross-origin" 
             allowfullscreen>
@@ -5135,7 +5152,7 @@
         `;
         if (backupBox) {
           backupBox.innerHTML = `
-            <a href="${embedInfo.directUrl}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: var(--asix-orange); font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
+            <a href="${escapeAttr(embedInfo.directUrl)}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: var(--asix-orange); font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
               ▶ Buka di YouTube ↗
             </a>
           `;
@@ -5143,32 +5160,40 @@
       } else if (embedInfo.type === 'drive') {
         box.innerHTML = `
           <iframe 
-            src="${embedInfo.embedUrl}" 
+            src="${escapeAttr(embedInfo.embedUrl)}" 
             allow="autoplay; encrypted-media; picture-in-picture" 
             allowfullscreen>
           </iframe>
         `;
         if (backupBox) {
           backupBox.innerHTML = `
-            <a href="${embedInfo.directUrl}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: var(--asix-orange); font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
+            <a href="${escapeAttr(embedInfo.directUrl)}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: var(--asix-orange); font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
               📁 Buka di Google Drive ↗
             </a>
           `;
         }
-      } else {
+      } else if (embedInfo.type === 'generic') {
         box.innerHTML = `
           <iframe 
-            src="${embedInfo.embedUrl}" 
+            src="${escapeAttr(embedInfo.embedUrl)}" 
             allowfullscreen>
           </iframe>
         `;
         if (backupBox) {
           backupBox.innerHTML = `
-            <a href="${embedInfo.directUrl}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: var(--asix-orange); font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
+            <a href="${escapeAttr(embedInfo.directUrl)}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: var(--asix-orange); font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
               🔗 Buka Tautan Langsung ↗
             </a>
           `;
         }
+      } else {
+        box.innerHTML = `
+          <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
+            <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--asix-danger, #EF4444);">⚠️ Link Materi Tidak Valid</p>
+            <p style="font-size: 13px; color: #9CA3AF; margin: 0; max-width: 90%;">Link materi tidak valid atau tidak menggunakan protokol HTTPS yang aman.</p>
+          </div>
+        `;
+        if (backupBox) backupBox.innerHTML = '';
       }
     }
 
@@ -5178,6 +5203,11 @@
     function openFullscreenMateri() {
       if (!currentPlayingMateri || !currentPlayingMateri.url) {
         showToast('Tidak ada materi aktif untuk ditampilkan layar penuh.');
+        return;
+      }
+
+      if (!isHttpsUrl_(currentPlayingMateri.url)) {
+        showToast('Link materi tidak valid.');
         return;
       }
 
@@ -5192,7 +5222,7 @@
       if (embedInfo.type === 'youtube') {
         box.innerHTML = `
           <iframe 
-            src="${embedInfo.embedUrl}" 
+            src="${escapeAttr(embedInfo.embedUrl)}" 
             style="width: 100%; height: 100%; border: 0;"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
             referrerpolicy="strict-origin-when-cross-origin" 
@@ -5202,20 +5232,23 @@
       } else if (embedInfo.type === 'drive') {
         box.innerHTML = `
           <iframe 
-            src="${embedInfo.embedUrl}" 
+            src="${escapeAttr(embedInfo.embedUrl)}" 
             style="width: 100%; height: 100%; border: 0;"
             allow="autoplay; encrypted-media; picture-in-picture" 
             allowfullscreen>
           </iframe>
         `;
-      } else {
+      } else if (embedInfo.type === 'generic') {
         box.innerHTML = `
           <iframe 
-            src="${embedInfo.embedUrl}" 
+            src="${escapeAttr(embedInfo.embedUrl)}" 
             style="width: 100%; height: 100%; border: 0;"
             allowfullscreen>
           </iframe>
         `;
+      } else {
+        showToast('Link materi tidak valid.');
+        return;
       }
 
       overlay.style.display = 'flex';
@@ -5233,6 +5266,10 @@
     function openMateriInNewTab() {
       if (!currentPlayingMateri || !currentPlayingMateri.url) {
         showToast('Tidak ada materi aktif untuk dibuka.');
+        return;
+      }
+      if (!isHttpsUrl_(currentPlayingMateri.url)) {
+        showToast('Link materi tidak valid.');
         return;
       }
       window.open(currentPlayingMateri.url, '_blank', 'noopener,noreferrer');
@@ -5319,8 +5356,10 @@
       }
 
       if (linkBtn) {
-        if (k.link && k.link.trim() !== '') {
+        if (k.link && isHttpsUrl_(k.link)) {
           linkBtn.href = k.link.trim();
+          linkBtn.rel = 'noopener noreferrer';
+          linkBtn.target = '_blank';
           linkBtn.style.display = 'inline-block';
         } else {
           linkBtn.style.display = 'none';
@@ -5351,7 +5390,7 @@
 
       if (!res.ok) {
         if (!append) {
-          container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--asix-danger);">${res.error || 'Gagal memuat konten.'}</div>`;
+          container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--asix-danger);">${escapeHtml(res.error || 'Gagal memuat konten.')}</div>`;
         }
         return;
       }
@@ -5386,8 +5425,10 @@
       const html = items.map(k => {
         const coverSrc = formatDriveCoverUrl(k.cover_url);
         const safeTitle = escapeAttr(k.judul);
+        const safeKontenId = escapeAttr(k.konten_id);
+        const safeLink = (k.link && isHttpsUrl_(k.link)) ? escapeAttr(k.link) : '';
         return `
-          <div class="asix-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onclick="openKontenDetailModal('${k.konten_id}')">
+          <div class="asix-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" data-konten-id="${safeKontenId}" onclick="openKontenDetailModal(this.getAttribute('data-konten-id'))">
             <div style="width: 100%; height: 160px; background: #1a1a1a; position: relative; overflow: hidden;">
               ${coverSrc ? `
                 <img src="${coverSrc}" alt="${safeTitle}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover;">
@@ -5405,7 +5446,7 @@
               <p style="font-size: 13px; color: var(--asix-text-muted); line-height: 1.5; margin-bottom: 14px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${escapeHtml(k.ringkasan || k.isi || '')}</p>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--asix-border);">
                 <span style="font-size: 12px; font-weight: 600; color: var(--asix-orange);">Baca Selengkapnya &rarr;</span>
-                ${k.link ? `<button type="button" onclick="event.stopPropagation(); window.open('${escapeAttr(k.link)}', '_blank');" class="btn-asix-secondary" style="font-size: 11px; padding: 4px 10px;">Link &rarr;</button>` : ''}
+                ${safeLink ? `<a href="${safeLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();" class="btn-asix-secondary" style="font-size: 11px; padding: 4px 10px; text-decoration: none;">Link &rarr;</a>` : ''}
               </div>
             </div>
           </div>
@@ -6555,7 +6596,7 @@
 
       const res = await apiCall('apiAdminPaketList');
       if (!res.ok) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--asix-danger);">${res.error || 'Gagal memuat daftar paket.'}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--asix-danger);">${escapeHtml(res.error || 'Gagal memuat daftar paket.')}</td></tr>`;
         showToast(res.error || 'Gagal memuat paket.');
         return;
       }
@@ -6568,24 +6609,24 @@
 
       tbody.innerHTML = adminPaketCache.map(p => {
         const hargaFormatted = 'Rp ' + Number(p.harga || 0).toLocaleString('id-ID');
-        const statusBadge = `<span style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; background: ${p.status === 'aktif' ? '#DCFCE7' : '#F3F4F6'}; color: ${p.status === 'aktif' ? '#166534' : '#4B5563'};">${p.status}</span>`;
-        const linkHtml = p.link_checkout
-          ? `<a href="${p.link_checkout}" target="_blank" rel="noopener noreferrer" style="color: var(--asix-orange); font-size: 12px; font-weight: 600;">Link Lynk.id ↗</a>`
+        const statusBadge = `<span style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; background: ${p.status === 'aktif' ? '#DCFCE7' : '#F3F4F6'}; color: ${p.status === 'aktif' ? '#166534' : '#4B5563'};">${escapeHtml(p.status)}</span>`;
+        const linkHtml = (p.link_checkout && isHttpsUrl_(p.link_checkout))
+          ? `<a href="${escapeAttr(p.link_checkout)}" target="_blank" rel="noopener noreferrer" style="color: var(--asix-orange); font-size: 12px; font-weight: 600;">Link Lynk.id ↗</a>`
           : '<span style="color: var(--asix-text-muted); font-size: 12px;">-</span>';
         const modulBadges = (p.modul_ids && p.modul_ids.length > 0)
-          ? p.modul_ids.map(mId => `<span class="badge-preview" style="font-size: 10px; margin: 2px; display: inline-block;">${mId}</span>`).join('')
+          ? p.modul_ids.map(mId => `<span class="badge-preview" style="font-size: 10px; margin: 2px; display: inline-block;">${escapeHtml(mId)}</span>`).join('')
           : '<span style="font-size: 12px; color: var(--asix-text-muted);">Tidak ada modul</span>';
 
         return `
           <tr>
-            <td data-label="ID Paket"><strong style="color: var(--asix-orange);">${p.paket_id}</strong></td>
-            <td data-label="Nama Paket"><strong class="card-value" style="color: var(--asix-black);">${p.nama_paket}</strong></td>
+            <td data-label="ID Paket"><strong style="color: var(--asix-orange);">${escapeHtml(p.paket_id)}</strong></td>
+            <td data-label="Nama Paket"><strong class="card-value" style="color: var(--asix-black);">${escapeHtml(p.nama_paket)}</strong></td>
             <td data-label="Harga"><span class="card-value" style="font-weight: 700; color: var(--asix-black);">${hargaFormatted}</span></td>
             <td data-label="Modul Terbuka"><div class="card-value" style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px;">${modulBadges}</div></td>
             <td data-label="Link Lynk.id"><span class="card-value">${linkHtml}</span></td>
             <td data-label="Status"><span class="card-value">${statusBadge}</span></td>
             <td data-label="Aksi" class="td-action">
-              <button class="btn-asix-secondary" style="font-size: 12px; padding: 6px 14px;" onclick="openPaketModal('${p.paket_id}')">✏️ Edit Paket</button>
+              <button class="btn-asix-secondary" style="font-size: 12px; padding: 6px 14px;" onclick="openPaketModal('${escapeAttr(p.paket_id)}')">✏️ Edit Paket</button>
             </td>
           </tr>
         `;
@@ -6644,8 +6685,8 @@
           const isChecked = currentModulIds.includes(m.modul_id);
           return `
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 500; margin: 0; padding: 4px 0;">
-              <input type="checkbox" class="paket-modul-chk" value="${m.modul_id}" ${isChecked ? 'checked' : ''} style="width: 16px; height: 16px; accent-color: var(--asix-orange);">
-              <span><strong style="color: var(--asix-black);">${m.modul_id}</strong> - ${m.nama_modul} <span style="font-size: 11px; color: var(--asix-text-muted);">(${m.status})</span></span>
+              <input type="checkbox" class="paket-modul-chk" value="${escapeAttr(m.modul_id)}" ${isChecked ? 'checked' : ''} style="width: 16px; height: 16px; accent-color: var(--asix-orange);">
+              <span><strong style="color: var(--asix-black);">${escapeHtml(m.modul_id)}</strong> - ${escapeHtml(m.nama_modul)} <span style="font-size: 11px; color: var(--asix-text-muted);">(${escapeHtml(m.status)})</span></span>
             </label>
           `;
         }).join('');
@@ -6749,7 +6790,7 @@
         selectPaket.innerHTML = '<option value="">(Belum ada paket aktif, silakan buat di tab Paket)</option>';
       } else {
         selectPaket.innerHTML = '<option value="">-- Pilih Paket --</option>' + activePakets.map(p => `
-          <option value="${p.paket_id}">${p.nama_paket} (Rp ${Number(p.harga || 0).toLocaleString('id-ID')}) - [${p.paket_id}]</option>
+          <option value="${escapeAttr(p.paket_id)}">${escapeHtml(p.nama_paket)} (Rp ${Number(p.harga || 0).toLocaleString('id-ID')}) - [${escapeHtml(p.paket_id)}]</option>
         `).join('');
       }
 
@@ -6761,7 +6802,7 @@
           selectMember.innerHTML = '<option value="">(Belum ada member terdaftar)</option>';
         } else {
           selectMember.innerHTML = '<option value="">-- Pilih Member --</option>' + members.map(m => `
-            <option value="${m.member_id}">${m.nama} (${m.email}) - ${m.member_id}</option>
+            <option value="${escapeAttr(m.member_id)}">${escapeHtml(m.nama)} (${escapeHtml(m.email)}) - ${escapeHtml(m.member_id)}</option>
           `).join('');
         }
       } else {
@@ -6784,7 +6825,7 @@
             selectMember.innerHTML = '<option value="">Member tidak ditemukan</option>';
           } else {
             selectMember.innerHTML = members.map(m => `
-              <option value="${m.member_id}">${m.nama} (${m.email}) - ${m.member_id}</option>
+              <option value="${escapeAttr(m.member_id)}">${escapeHtml(m.nama)} (${escapeHtml(m.email)}) - ${escapeHtml(m.member_id)}</option>
             `).join('');
           }
         } else {
@@ -7631,7 +7672,12 @@
 
     function escapeAttr(str) {
       if (!str) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/'/g, '&#39;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
     }
 
     function escapeHtml(str) {
@@ -7642,6 +7688,21 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+    }
+
+    function isHttpsUrl_(url) {
+      if (!url || typeof url !== 'string') return false;
+      const trimmed = url.trim();
+      if (!/^https:\/\//i.test(trimmed)) return false;
+      try {
+        if (typeof URL !== 'undefined') {
+          const parsed = new URL(trimmed);
+          return parsed.protocol === 'https:';
+        }
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
 
     /**
@@ -7660,7 +7721,7 @@
 
       const res = await apiCall('apiModulList');
       if (!res.ok) {
-        container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--asix-danger);">Gagal memuat modul: ${res.error || 'Terjadi kesalahan sistem.'}</div>`;
+        container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--asix-danger);">Gagal memuat modul: ${escapeHtml(res.error || 'Terjadi kesalahan sistem.')}</div>`;
         showToast(res.error || 'Gagal memuat modul.');
         return;
       }
@@ -7680,38 +7741,40 @@
 
       container.innerHTML = adminModulCache.map(m => {
         const isOpen = !!openAccordions[m.modul_id];
-        const statusBadge = `<span style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; background: ${m.status === 'aktif' ? '#DCFCE7' : '#F3F4F6'}; color: ${m.status === 'aktif' ? '#166534' : '#4B5563'};">${m.status}</span>`;
+        const statusBadge = `<span style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; background: ${m.status === 'aktif' ? '#DCFCE7' : '#F3F4F6'}; color: ${m.status === 'aktif' ? '#166534' : '#4B5563'};">${escapeHtml(m.status)}</span>`;
+        const safeModulId = escapeAttr(m.modul_id);
+        const safeNamaModul = escapeAttr(m.nama_modul);
 
         return `
           <div class="asix-card" style="margin-bottom: 16px; border-left: 4px solid var(--asix-orange); overflow: hidden;">
-            <div style="padding: 16px 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; cursor: pointer; background: white;" onclick="toggleModulAccordion('${m.modul_id}')">
+            <div style="padding: 16px 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; cursor: pointer; background: white;" onclick="toggleModulAccordion('${safeModulId}')">
               <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 250px;">
-                <span style="font-size: 15px; font-weight: 700; color: var(--asix-orange); background: #FFF7ED; padding: 4px 8px; border-radius: 6px;">${m.modul_id}</span>
+                <span style="font-size: 15px; font-weight: 700; color: var(--asix-orange); background: #FFF7ED; padding: 4px 8px; border-radius: 6px;">${escapeHtml(m.modul_id)}</span>
                 <div>
                   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    <h4 style="font-size: 16px; margin: 0; color: var(--asix-black);">${m.nama_modul}</h4>
+                    <h4 style="font-size: 16px; margin: 0; color: var(--asix-black);">${escapeHtml(m.nama_modul)}</h4>
                     ${statusBadge}
                   </div>
                   <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 12px; color: var(--asix-text-muted); flex-wrap: wrap;">
-                    <span>Urutan #${m.urutan}</span>
+                    <span>Urutan #${escapeHtml(String(m.urutan))}</span>
                     <span>•</span>
-                    <span id="badge-materi-count-${m.modul_id}">${adminMateriCache[m.modul_id] ? `${adminMateriCache[m.modul_id].length} Materi` : 'Klik untuk lihat materi'}</span>
+                    <span id="badge-materi-count-${safeModulId}">${adminMateriCache[m.modul_id] ? `${adminMateriCache[m.modul_id].length} Materi` : 'Klik untuk lihat materi'}</span>
                   </div>
                 </div>
               </div>
               <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;" onclick="event.stopPropagation()">
-                  <button class="btn-asix-secondary" style="font-size: 11px; padding: 6px 12px;" onclick="openModulMembersModal('${m.modul_id}')">👥 Member</button>
+                  <button class="btn-asix-secondary" style="font-size: 11px; padding: 6px 12px;" onclick="openModulMembersModal('${safeModulId}', '${safeNamaModul}')">👥 Member</button>
                   ${isSuperAdmin ? `
-                    <button class="btn-asix-secondary" style="font-size: 11px; padding: 6px 12px;" onclick="openPenugasanAdminModal('${m.modul_id}')">🛡️ Admin</button>
-                    <button class="btn-asix-secondary" style="font-size: 11px; padding: 6px 12px;" onclick="openModulModal('${m.modul_id}')">✏️ Edit Modul</button>
+                    <button class="btn-asix-secondary" style="font-size: 11px; padding: 6px 12px;" onclick="openPenugasanAdminModal('${safeModulId}', '${safeNamaModul}')">🛡️ Admin</button>
+                    <button class="btn-asix-secondary" style="font-size: 11px; padding: 6px 12px;" onclick="openModulModal('${safeModulId}')">✏️ Edit Modul</button>
                   ` : ''}
-                  <button class="btn-asix-primary" style="font-size: 11px; padding: 6px 12px;" onclick="openMateriModal('${m.modul_id}')">+ Materi</button>
+                  <button class="btn-asix-primary" style="font-size: 11px; padding: 6px 12px;" onclick="openMateriModal('${safeModulId}')">+ Materi</button>
                 </div>
-                <span id="accordion-arrow-${m.modul_id}" style="display: inline-block; font-size: 14px; color: var(--asix-text-muted); font-weight: 700; cursor: pointer; padding: 6px 8px; border-radius: 4px; transition: transform 0.2s ease;" onclick="event.stopPropagation(); toggleModulAccordion('${m.modul_id}')">${isOpen ? '▲' : '▼'}</span>
+                <span id="accordion-arrow-${safeModulId}" style="display: inline-block; font-size: 14px; color: var(--asix-text-muted); font-weight: 700; cursor: pointer; padding: 6px 8px; border-radius: 4px; transition: transform 0.2s ease;" onclick="event.stopPropagation(); toggleModulAccordion('${safeModulId}')">${isOpen ? '▲' : '▼'}</span>
               </div>
             </div>
-            <div id="materi-accordion-${m.modul_id}" style="display: ${isOpen ? 'block' : 'none'}; border-top: 1px solid var(--asix-border); padding: 16px 20px; background: #FAFAFA;">
+            <div id="materi-accordion-${safeModulId}" style="display: ${isOpen ? 'block' : 'none'}; border-top: 1px solid var(--asix-border); padding: 16px 20px; background: #FAFAFA;">
               <!-- Konten materi dirender dinamis -->
             </div>
           </div>
@@ -7772,7 +7835,7 @@
         const res = await apiCall('apiModulDetail', { modul_id: modulId });
         if (!res.ok) {
           console.error(`[loadAdminMateriForModul] Gagal memuat materi untuk ${modulId}:`, res.error);
-          container.innerHTML = `<div style="padding: 12px; color: var(--asix-danger); font-size: 13px; background: #FEF2F2; border-radius: 6px; border: 1px solid #FCA5A5;">⚠️ Gagal memuat materi: ${res.error || 'Terjadi kesalahan sistem'}. <button class="btn-asix-secondary" style="font-size: 11px; padding: 2px 8px; margin-left: 8px;" onclick="loadAdminMateriForModul('${modulId}', true)">Coba Lagi</button></div>`;
+          container.innerHTML = `<div style="padding: 12px; color: var(--asix-danger); font-size: 13px; background: #FEF2F2; border-radius: 6px; border: 1px solid #FCA5A5;">⚠️ Gagal memuat materi: ${escapeHtml(res.error || 'Terjadi kesalahan sistem')}. <button class="btn-asix-secondary" style="font-size: 11px; padding: 2px 8px; margin-left: 8px;" onclick="loadAdminMateriForModul('${escapeAttr(modulId)}', true)">Coba Lagi</button></div>`;
           return;
         }
 
@@ -7782,7 +7845,7 @@
         adminMateriSectionsCache[modulId] = sections;
 
         // Update badge jumlah materi pada header kartu modul
-        const badgeCount = document.getElementById(`badge-materi-count-${modulId}`);
+        const badgeCount = document.getElementById(`badge-materi-count-${escapeAttr(modulId)}`);
         if (badgeCount) {
           badgeCount.textContent = `${materiList.length} Materi`;
         }
@@ -7790,7 +7853,7 @@
         renderAdminMateriAccordion(modulId, materiList, sections);
       } catch (err) {
         console.error(`[loadAdminMateriForModul] Exception untuk ${modulId}:`, err);
-        container.innerHTML = `<div style="padding: 12px; color: var(--asix-danger); font-size: 13px; background: #FEF2F2; border-radius: 6px; border: 1px solid #FCA5A5;">⚠️ Terjadi kesalahan koneksi saat memuat materi. <button class="btn-asix-secondary" style="font-size: 11px; padding: 2px 8px; margin-left: 8px;" onclick="loadAdminMateriForModul('${modulId}', true)">Coba Lagi</button></div>`;
+        container.innerHTML = `<div style="padding: 12px; color: var(--asix-danger); font-size: 13px; background: #FEF2F2; border-radius: 6px; border: 1px solid #FCA5A5;">⚠️ Terjadi kesalahan koneksi saat memuat materi. <button class="btn-asix-secondary" style="font-size: 11px; padding: 2px 8px; margin-left: 8px;" onclick="loadAdminMateriForModul('${escapeAttr(modulId)}', true)">Coba Lagi</button></div>`;
       }
     }
 
@@ -7798,14 +7861,14 @@
      * Render daftar materi di dalam accordion modul
      */
     function renderAdminMateriAccordion(modulId, materiList = [], sections = null) {
-      const container = document.getElementById(`materi-accordion-${modulId}`);
+      const container = document.getElementById(`materi-accordion-${escapeAttr(modulId)}`);
       if (!container) return;
 
       if (!materiList || materiList.length === 0) {
         container.innerHTML = `
           <div style="padding: 20px; text-align: center; color: var(--asix-text-muted); background: white; border-radius: var(--asix-radius); border: 1px dashed var(--asix-border);">
             <p style="margin-bottom: 8px; font-size: 13px; font-weight: 500;">Belum ada materi pada modul ini.</p>
-            <button class="btn-asix-primary" style="font-size: 11px; padding: 6px 14px;" onclick="openMateriModal('${modulId}')">+ Tambah Materi Sekarang</button>
+            <button class="btn-asix-primary" style="font-size: 11px; padding: 6px 14px;" onclick="openMateriModal('${escapeAttr(modulId)}')">+ Tambah Materi Sekarang</button>
           </div>
         `;
         return;
@@ -7827,7 +7890,7 @@
         return `
           <div style="margin-bottom: 16px; background: white; border: 1px solid var(--asix-border); border-radius: var(--asix-radius); overflow: hidden;">
             <div style="padding: 10px 14px; background: #F3F4F6; font-size: 13px; font-weight: 700; color: var(--asix-black); display: flex; justify-content: space-between; align-items: center;">
-              <span>📂 ${secName}</span>
+              <span>📂 ${escapeHtml(secName)}</span>
               <span style="font-size: 11px; font-weight: 600; color: var(--asix-text-muted);">${items.length} materi</span>
             </div>
             <div class="asix-table-wrapper admin-materi-table-wrapper" style="border: none; border-radius: 0;">
@@ -7845,23 +7908,23 @@
                 <tbody>
                   ${items.map(mat => `
                     <tr class="admin-materi-row">
-                      <td class="col-materi-urutan"><strong>#${mat.urutan}</strong></td>
+                      <td class="col-materi-urutan"><strong>#${escapeHtml(String(mat.urutan))}</strong></td>
                       <td class="col-materi-judul">
                         <div style="font-weight: 600; color: var(--asix-black);">${escapeHtml(mat.judul || '')}</div>
-                        ${mat.url ? `<a href="${mat.url}" target="_blank" rel="noopener noreferrer" style="font-size: 11px; color: var(--asix-orange); text-decoration: underline;">Link URL ↗</a>` : ''}
+                        ${(mat.url && isHttpsUrl_(mat.url)) ? `<a href="${escapeAttr(mat.url)}" target="_blank" rel="noopener noreferrer" style="font-size: 11px; color: var(--asix-orange); text-decoration: underline;">Link URL ↗</a>` : (mat.url ? '<span style="font-size: 11px; color: var(--asix-danger);">Link materi tidak valid</span>' : '')}
                       </td>
-                      <td class="col-materi-tipe"><span class="badge-preview" style="font-size: 10px; text-transform: uppercase;">${mat.tipe || 'video'}</span></td>
+                      <td class="col-materi-tipe"><span class="badge-preview" style="font-size: 10px; text-transform: uppercase;">${escapeHtml(mat.tipe || 'video')}</span></td>
                       <td class="col-materi-preview">
                         ${mat.is_preview ? '<span style="font-size: 10px; font-weight: 700; color: #047857; background: #D1FAE5; padding: 2px 6px; border-radius: 4px;">✓ Preview</span>' : '<span style="font-size: 11px; color: var(--asix-text-muted);">-</span>'}
                       </td>
                       <td class="col-materi-status">
                         <span style="font-size: 11px; font-weight: 700; color: ${mat.status === 'aktif' ? 'green' : 'gray'};">
-                          ${mat.status}
+                          ${escapeHtml(mat.status)}
                         </span>
                       </td>
                       <td class="col-materi-aksi" style="text-align: right; white-space: nowrap;">
-                        <button class="btn-asix-secondary" style="font-size: 11px; padding: 4px 8px; margin-right: 4px;" onclick="openMateriModal('${modulId}', '${mat.materi_id}')">Edit</button>
-                        <button class="btn-asix-danger" style="font-size: 11px; padding: 4px 8px;" onclick="deleteAdminMateri('${mat.materi_id}', '${modulId}')">Hapus</button>
+                        <button class="btn-asix-secondary" style="font-size: 11px; padding: 4px 8px; margin-right: 4px;" onclick="openMateriModal('${escapeAttr(modulId)}', '${escapeAttr(mat.materi_id)}')">Edit</button>
+                        <button class="btn-asix-danger" style="font-size: 11px; padding: 4px 8px;" onclick="deleteAdminMateri('${escapeAttr(mat.materi_id)}', '${escapeAttr(modulId)}')">Hapus</button>
                       </td>
                     </tr>
                   `).join('')}
@@ -7965,7 +8028,7 @@
       // Isi dropdown pilihan modul
       const selectModul = document.getElementById('form-materi-modul-id');
       selectModul.innerHTML = adminModulCache.map(m => `
-        <option value="${m.modul_id}">${m.modul_id} - ${m.nama_modul}</option>
+        <option value="${escapeAttr(m.modul_id)}">${escapeHtml(m.modul_id)} - ${escapeHtml(m.nama_modul)}</option>
       `).join('');
 
       if (modulId) {
@@ -8116,7 +8179,7 @@
 
       const res = await apiCall('apiAdminModulMembers', { modul_id: modulId });
       if (!res.ok) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--asix-danger);">${res.error || 'Gagal memuat member.'}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--asix-danger);">${escapeHtml(res.error || 'Gagal memuat member.')}</td></tr>`;
         showToast(res.error || 'Gagal memuat member.');
         return;
       }
@@ -8129,13 +8192,13 @@
 
       tbody.innerHTML = members.map(m => `
         <tr>
-          <td><strong>${m.member_id}</strong></td>
-          <td>${m.nama}</td>
-          <td>${m.email}</td>
-          <td>${m.whatsapp || '-'}</td>
+          <td><strong>${escapeHtml(m.member_id)}</strong></td>
+          <td>${escapeHtml(m.nama)}</td>
+          <td>${escapeHtml(m.email)}</td>
+          <td>${escapeHtml(m.whatsapp || '-')}</td>
           <td>
             <span style="font-size: 11px; font-weight: 700; color: ${m.status === 'aktif' ? 'green' : 'red'};">
-              ${m.status}
+              ${escapeHtml(m.status)}
             </span>
           </td>
         </tr>
@@ -8176,7 +8239,7 @@
         selectMember.innerHTML = '<option value="">Tidak ada akun ber-role admin_modul (buat di tab Members)</option>';
       } else {
         selectMember.innerHTML = '<option value="">-- Pilih Akun Admin Modul --</option>' +
-          admins.map(a => `<option value="${a.member_id}">${a.nama} (${a.email}) - ${a.member_id}</option>`).join('');
+          admins.map(a => `<option value="${escapeAttr(a.member_id)}">${escapeHtml(a.nama)} (${escapeHtml(a.email)}) - ${escapeHtml(a.member_id)}</option>`).join('');
       }
     }
 
@@ -8272,7 +8335,7 @@
       });
 
       if (!res.ok) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--asix-danger);">${res.error || 'Gagal memuat konten.'}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--asix-danger);">${escapeHtml(res.error || 'Gagal memuat konten.')}</td></tr>`;
         return;
       }
 
