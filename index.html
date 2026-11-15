@@ -11,6 +11,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 
+  <!-- Google Sign-In Library (G3) -->
+  <script src="https://accounts.google.com/gsi/client" async defer onload="if(typeof initGoogleLogin==='function')initGoogleLogin()"></script>
+
   <style>
     :root {
       --asix-white: #FFFFFF;
@@ -1438,6 +1441,39 @@
       from { transform: translateY(-20px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
+
+    /* Google Sign-In Button & Divider (G3) */
+    .login-divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 18px 0 16px;
+      color: var(--asix-text-muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .login-divider::before,
+    .login-divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--asix-border);
+    }
+    .login-divider:not(:empty)::before {
+      margin-right: 12px;
+    }
+    .login-divider:not(:empty)::after {
+      margin-left: 12px;
+    }
+    #btn-google-login-wrapper {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+    #btn-google-login {
+      max-width: 100%;
+      display: flex;
+      justify-content: center;
+    }
   </style>
 </head>
 <body>
@@ -1581,6 +1617,17 @@
                 Masuk ke Kelas
               </button>
             </form>
+
+            <!-- Blok Tombol Lanjutkan dengan Google (G3) -->
+            <div id="google-login-section" style="display: none; margin-top: 4px;">
+              <div class="login-divider">
+                <span>atau</span>
+              </div>
+              <div id="btn-google-login-wrapper">
+                <div id="btn-google-login"></div>
+              </div>
+              <div id="google-login-error" style="display: none; color: var(--asix-danger); font-size: 12px; margin-top: 10px; padding: 8px 12px; background: rgba(239,68,68,0.1); border-radius: 6px; border: 1px solid rgba(239,68,68,0.2); text-align: center; line-height: 1.4;"></div>
+            </div>
 
             <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--asix-border); text-align: center;">
               <p style="font-size: 13px; color: var(--asix-text-muted); margin-bottom: 10px;">Belum memiliki akun Asix Academy?</p>
@@ -3871,6 +3918,161 @@
       } finally {
         btn.disabled = false;
         btn.textContent = 'Masuk ke Kelas';
+      }
+    }
+
+    /**
+     * =====================================================================
+     * FITUR LOGIN GOOGLE (G3)
+     * =====================================================================
+     */
+    const GOOGLE_CLIENT_ID_WEB = '48143745319-4s487j26qk4pgi1i60vom00ba56jaa9l.apps.googleusercontent.com';
+    let isGoogleLoginInitialized = false;
+
+    /**
+     * Inisialisasi Google Sign-In button di kartu login
+     */
+    function initGoogleLogin() {
+      // 1. Protokol file: tidak didukung oleh Google Identity Services
+      if (window.location && window.location.protocol === 'file:') {
+        return;
+      }
+
+      // 2. Cegah inisialisasi ganda
+      if (isGoogleLoginInitialized) {
+        return;
+      }
+
+      // 3. Pastikan pustaka Google Identity Services tersedia
+      if (typeof window.google === 'undefined' || !window.google.accounts || !window.google.accounts.id) {
+        return;
+      }
+
+      const container = document.getElementById('btn-google-login');
+      const section = document.getElementById('google-login-section');
+      if (!container || !section) {
+        return;
+      }
+
+      try {
+        // Inisialisasi Google Identity Services tanpa One Tap / prompt otomatis
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID_WEB,
+          callback: handleGoogleCredential,
+          auto_select: false
+        });
+
+        // Hitung lebar tombol yang proporsional dengan kartu login (maksimal 400px, minimal 200px)
+        const card = document.getElementById('view-login') ? document.getElementById('view-login').querySelector('.asix-card') : null;
+        let buttonWidth = 360;
+        if (card && card.clientWidth) {
+          buttonWidth = Math.min(Math.max(card.clientWidth - 64, 200), 380);
+        }
+
+        // Render tombol resmi Google "Lanjutkan dengan Google"
+        google.accounts.id.renderButton(container, {
+          theme: 'outline',
+          size: 'large',
+          text: 'continue_with',
+          shape: 'rectangular',
+          width: buttonWidth
+        });
+
+        // Tampilkan blok login Google setelah tombol berhasil dirender
+        section.style.display = 'block';
+        isGoogleLoginInitialized = true;
+      } catch (err) {
+        // Abaikan error pustaka pihak ketiga agar tidak memutus fungsi login reguler
+      }
+    }
+
+    /**
+     * Polling inisialisasi pustaka Google Sign-In (maksimal 10 detik, 50x @200ms)
+     */
+    function setupGoogleLoginInit() {
+      if (window.location && window.location.protocol === 'file:') return;
+      if (isGoogleLoginInitialized) return;
+
+      // Jika pustaka Google sudah siap, langsung inisialisasi
+      if (typeof window.google !== 'undefined' && window.google.accounts && window.google.accounts.id) {
+        initGoogleLogin();
+        return;
+      }
+
+      let attempts = 0;
+      const maxAttempts = 50; // 50 * 200ms = 10 detik
+      const intervalId = setInterval(() => {
+        attempts++;
+        if (isGoogleLoginInitialized || attempts >= maxAttempts) {
+          clearInterval(intervalId);
+          return;
+        }
+        if (typeof window.google !== 'undefined' && window.google.accounts && window.google.accounts.id) {
+          clearInterval(intervalId);
+          initGoogleLogin();
+        }
+      }, 200);
+    }
+
+    /**
+     * Callback setelah pengguna memilih akun Google
+     * @param {Object} response - Objek respon dari Google Identity Services { credential }
+     */
+    async function handleGoogleCredential(response) {
+      const errBox = document.getElementById('google-login-error');
+      if (errBox) {
+        errBox.style.display = 'none';
+        errBox.textContent = '';
+      }
+
+      if (!response || !response.credential) {
+        const errMsg = 'Login Google gagal. Coba lagi.';
+        if (errBox) {
+          errBox.textContent = errMsg;
+          errBox.style.display = 'block';
+        }
+        showToast(errMsg);
+        return;
+      }
+
+      const btn = document.getElementById('btn-submit-login');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Memverifikasi...';
+      }
+
+      try {
+        const res = await apiCall('apiLoginGoogle', { idToken: response.credential });
+        if (res.ok) {
+          localStorage.setItem('aac_token', res.data.token);
+          localStorage.setItem('aac_user', JSON.stringify(res.data.user));
+          currentAuthUser = res.data.user;
+          updateUserProfileUI();
+          showToast('Login berhasil! Selamat datang, ' + currentAuthUser.nama);
+          navigate('home');
+        } else {
+          let errMsg = res.error || 'Login Google gagal. Coba lagi.';
+          if (errMsg.toLowerCase().includes('koneksi') || errMsg.toLowerCase().includes('network') || errMsg.toLowerCase().includes('fetch')) {
+            errMsg = 'Koneksi bermasalah. Coba lagi.';
+          }
+          if (errBox) {
+            errBox.textContent = errMsg;
+            errBox.style.display = 'block';
+          }
+          showToast(errMsg);
+        }
+      } catch (err) {
+        const netErrMsg = 'Koneksi bermasalah. Coba lagi.';
+        if (errBox) {
+          errBox.textContent = netErrMsg;
+          errBox.style.display = 'block';
+        }
+        showToast(netErrMsg);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Masuk ke Kelas';
+        }
       }
     }
 
@@ -9225,6 +9427,9 @@
 
       // Inisialisasi header HP mengecil saat scroll (Langkah 5)
       initMobileHeaderShrink();
+
+      // Inisialisasi Google Sign-In (G3)
+      setupGoogleLoginInit();
 
       const savedUser = localStorage.getItem('aac_user');
       if (savedUser) {
