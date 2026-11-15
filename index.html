@@ -11,8 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 
-  <!-- Google Sign-In Library (G3) -->
-  <script src="https://accounts.google.com/gsi/client" async defer onload="if(typeof initGoogleLogin==='function')initGoogleLogin()"></script>
+  <!-- Google Sign-In Library (G3) dimuat secara dinamis via JavaScript bila saklar aktif atau ?g=1 -->
 
   <style>
     :root {
@@ -926,6 +925,20 @@
       background: #000;
       margin-bottom: 24px;
     }
+    .player-container:fullscreen,
+    .player-container:-webkit-full-screen {
+      width: 100% !important;
+      height: 100% !important;
+      padding-bottom: 0 !important;
+      border-radius: 0 !important;
+      background: #000 !important;
+      margin-bottom: 0 !important;
+    }
+    .player-container:fullscreen iframe,
+    .player-container:-webkit-full-screen iframe {
+      width: 100% !important;
+      height: 100% !important;
+    }
     .player-container iframe {
       position: absolute;
       top: 0;
@@ -1600,13 +1613,13 @@
             <form onsubmit="handleLogin(event)">
               <div class="form-group">
                 <label>Email Terdaftar</label>
-                <input type="email" id="login-email" class="form-control" placeholder="nama@email.com" required>
+                <input type="email" id="login-email" class="form-control" placeholder="nama@email.com" autocomplete="email" required>
               </div>
 
               <div class="form-group">
                 <label>Password</label>
                 <div class="password-wrapper">
-                  <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+                  <input type="password" id="login-password" class="form-control" placeholder="••••••••" autocomplete="current-password" required>
                   <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('login-password')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   </button>
@@ -3131,6 +3144,21 @@
      * KONFIGURASI BACKEND GAS & FALLBACK GEMINI CANVAS
      * =====================================================================
      */
+    // Saklar fitur Login Google (G3): jika false, tombol & pembatas disembunyikan dan skrip gsi tidak dimuat
+    // Dapat diaktifkan secara dinamis jika parameter URL berisi ?g=1
+    const ENABLE_GOOGLE_LOGIN = false;
+
+    function isGoogleLoginActive_() {
+      if (ENABLE_GOOGLE_LOGIN) return true;
+      try {
+        if (typeof window !== 'undefined' && window.location && window.location.search) {
+          const s = window.location.search;
+          return s.includes('g=1') || (typeof URLSearchParams !== 'undefined' && new URLSearchParams(s).get('g') === '1');
+        }
+      } catch (e) {}
+      return false;
+    }
+
     // TEMPELKAN Web App URL Google Apps Script Anda di sini (akhiran /exec)
     const API_URL = 'https://script.google.com/macros/s/AKfycbxFKbE-Fr9e7HG7gZShRJ1tPEzaNe9EmeSquM5evXQhmyb_vkT88mRXqBZF1YPxv1fn/exec';
 
@@ -3171,291 +3199,16 @@
     let activeModulDetail = null;
     let activeCheckoutPaketId = null;
 
-    // Fallback Data Dummy Lokal (Gemini Canvas Friendly)
+    // Fallback Data Kosong (Struktur data lokal aman tanpa placeholder palsu atau akun dummy)
     const DUMMY_FALLBACK = {
-      user: {
-        member_id: 'MBR-0001',
-        nama: 'Super Admin Asix',
-        email: 'admin@asix.id',
-        whatsapp: '6281200000001',
-        role: 'super_admin',
-        status: 'aktif'
-      },
-      moduls: [
-        {
-          modul_id: 'MOD-001',
-          nama_modul: 'Modul 1 Design & Video Konten AI',
-          deskripsi: 'Panduan lengkap membuat visual dan video berbasis AI untuk media sosial dan promosi.',
-          cover_url: '',
-          preview_text: 'Belajar prompt engineering, generate image konsisten, dan video AI profesional.',
-          status: 'aktif',
-          urutan: 1,
-          is_owned: true,
-          status_akses: 'dimiliki',
-          paket_checkout: [
-            {
-              paket_id: 'PKT-001',
-              nama_paket: 'Modul 1 Design & Video AI',
-              harga: 119000,
-              link_checkout: 'https://lynk.id/asix_studio/x4gmvp2k52pl/checkout',
-              urutan: 1,
-              status: 'aktif'
-            },
-            {
-              paket_id: 'PKT-003',
-              nama_paket: 'Bundle Plus (Semua Modul)',
-              harga: 339000,
-              link_checkout: 'https://lynk.id/asix_studio/lrlx4ew0812e/checkout',
-              urutan: 3,
-              status: 'aktif'
-            }
-          ]
-        },
-        {
-          modul_id: 'MOD-002',
-          nama_modul: 'Modul 2 Web App Google Apps Script',
-          deskripsi: 'Membangun aplikasi web interaktif fullstack dengan Google Sheets sebagai database.',
-          cover_url: '',
-          preview_text: 'Kuasai arsitektur REST API doPost, autentikasi sesi, dan integrasi Vercel.',
-          status: 'aktif',
-          urutan: 2,
-          is_owned: true,
-          status_akses: 'dimiliki',
-          paket_checkout: [
-            {
-              paket_id: 'PKT-002',
-              nama_paket: 'Modul 2 Web App Google Apps Script',
-              harga: 229000,
-              link_checkout: 'https://lynk.id/asix_studio/5mde09xlwvz4/checkout',
-              urutan: 2,
-              status: 'aktif'
-            },
-            {
-              paket_id: 'PKT-003',
-              nama_paket: 'Bundle Plus (Semua Modul)',
-              harga: 339000,
-              link_checkout: 'https://lynk.id/asix_studio/lrlx4ew0812e/checkout',
-              urutan: 3,
-              status: 'aktif'
-            }
-          ]
-        },
-        {
-          modul_id: 'MOD-003',
-          nama_modul: 'Modul 3 Bundle Plus',
-          deskripsi: 'Materi lanjutan eksklusif, studi kasus automasi bisnis, dan bonus project template.',
-          cover_url: '',
-          preview_text: 'Materi tambahan eksklusif dan update khusus pemilik paket Bundle Plus.',
-          status: 'aktif',
-          urutan: 3,
-          is_owned: false,
-          status_akses: 'terkunci',
-          paket_checkout: [
-            {
-              paket_id: 'PKT-003',
-              nama_paket: 'Bundle Plus',
-              harga: 339000,
-              link_checkout: 'https://lynk.id/asix_studio/lrlx4ew0812e/checkout',
-              urutan: 3,
-              status: 'aktif'
-            }
-          ]
-        },
-        {
-          modul_id: 'MOD-004',
-          nama_modul: 'Modul 4 Automasi Workflow & AI Agent',
-          deskripsi: 'Panduan membangun workflow otomatisasi dan agent AI.',
-          cover_url: '',
-          preview_text: 'Materi segera hadir.',
-          status: 'aktif',
-          urutan: 4,
-          is_owned: false,
-          status_akses: 'terkunci',
-          paket_checkout: [
-            {
-              paket_id: 'PKT-004',
-              nama_paket: 'Modul 4 Automasi Workflow & AI Agent',
-              harga: 299000,
-              link_checkout: 'https://lynk.id/asix_studio/pkt004/checkout',
-              urutan: 4,
-              status: 'aktif'
-            }
-          ]
-        },
-        {
-          modul_id: 'MOD-005',
-          nama_modul: 'Modul 5 Monetisasi & Launching Produk Digital',
-          deskripsi: 'Strategi penjualan dan packaging produk digital.',
-          cover_url: '',
-          preview_text: 'Materi segera hadir.',
-          status: 'aktif',
-          urutan: 5,
-          is_owned: false,
-          status_akses: 'terkunci',
-          paket_checkout: [
-            {
-              paket_id: 'PKT-005',
-              nama_paket: 'Modul 5 Monetisasi & Launching Produk Digital',
-              harga: 299000,
-              link_checkout: 'https://lynk.id/asix_studio/pkt005/checkout',
-              urutan: 5,
-              status: 'aktif'
-            }
-          ]
-        },
-        {
-          modul_id: 'MOD-006',
-          nama_modul: 'Modul 6 Scale Up & Fullstack Masterclass',
-          deskripsi: 'Materi tingkat lanjut untuk scaling aplikasi dan web app.',
-          cover_url: '',
-          preview_text: 'Materi segera hadir.',
-          status: 'aktif',
-          urutan: 6,
-          is_owned: false,
-          status_akses: 'terkunci',
-          paket_checkout: [
-            {
-              paket_id: 'PKT-006',
-              nama_paket: 'Modul 6 Scale Up & Fullstack Masterclass',
-              harga: 399000,
-              link_checkout: 'https://lynk.id/asix_studio/pkt006/checkout',
-              urutan: 6,
-              status: 'aktif'
-            }
-          ]
-        }
-      ],
-      materi: [
-        {
-          materi_id: 'MAT-0001',
-          modul_id: 'MOD-001',
-          bagian: 'Pengenalan AI',
-          judul: 'Pengantar Design AI & Prompt Engineering',
-          tipe: 'video',
-          url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-          deskripsi: 'Dasar-dasar pembuatan prompt visual dengan AI generatif.',
-          urutan: 1,
-          is_preview: true,
-          status: 'aktif'
-        },
-        {
-          materi_id: 'MAT-0002',
-          modul_id: 'MOD-002',
-          bagian: 'Persiapan Lingkungan',
-          judul: 'Setup Spreadsheet & Container-Bound Apps Script',
-          tipe: 'video',
-          url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-          deskripsi: 'Membuat spreadsheet baru dan mengikat script secara benar.',
-          urutan: 1,
-          is_preview: true,
-          status: 'aktif'
-        },
-        {
-          materi_id: 'MAT-0003',
-          modul_id: 'MOD-002',
-          bagian: 'Backend Apps Script',
-          judul: 'Routing Single Endpoint doPost & Security Check',
-          tipe: 'video',
-          url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-          deskripsi: 'Membangun API doPost yang aman dengan validasi token sesi.',
-          urutan: 2,
-          is_preview: false,
-          status: 'aktif'
-        }
-      ],
-      konten: [
-        {
-          konten_id: 'KNT-0001',
-          panel: 'library',
-          judul: 'Cheatsheet Prompt AI Coding Antigravity 2026',
-          ringkasan: 'Kumpulan prompt siap pakai untuk coding cepat dan arsitektur web app.',
-          isi: 'Gunakan prompt ini untuk memandu Antigravity dalam arsitektur kode berskala besar. Meliputi panduan penulisan PRD, pembuatan API backend single endpoint doPost, dan optimasi query Google Sheets.',
-          cover_url: '',
-          link: 'https://asix.id',
-          kategori: 'Cheatsheet',
-          status: 'terbit',
-          tanggal: '2026-11-01'
-        },
-        {
-          konten_id: 'KNT-0002',
-          panel: 'today',
-          judul: 'Rilis Google Apps Script V8 Runtime 2026',
-          ringkasan: 'Fitur terbaru dan peningkatan performa execution engine.',
-          isi: 'Optimasi eksekusi V8 engine dan penanganan kuota harian Sheets API. Sekarang mendukung ES2024 features secara penuh.',
-          cover_url: '',
-          link: '',
-          kategori: 'Pengumuman',
-          status: 'terbit',
-          tanggal: '2026-11-05'
-        },
-        {
-          konten_id: 'KNT-0003',
-          panel: 'others',
-          judul: 'Grup Komunitas Eksklusif Discord & Telegram Asix',
-          ringkasan: 'Akses link komunitas tanya jawab langsung bersama mentor.',
-          isi: 'Gabung ke kanal khusus member untuk diskusi real-time, sharing project web app, dan review kode mingguan bersama tim Asix Studio.',
-          cover_url: '',
-          link: 'https://t.me/asixstudio',
-          kategori: 'Komunitas',
-          status: 'terbit',
-          tanggal: '2026-11-08'
-        }
-      ],
-      faq: [
-        {
-          faq_id: 'FAQ-0001',
-          modul_id: '',
-          pertanyaan: 'Bagaimana cara mengakses modul setelah melakukan pembelian?',
-          jawaban: 'Setelah konfirmasi pembayaran di Lynk.id, akun Anda akan diaktifkan secara manual oleh admin dan modul langsung terbuka di dashboard.',
-          urutan: 1,
-          status: 'aktif'
-        },
-        {
-          faq_id: 'FAQ-0002',
-          modul_id: 'MOD-001',
-          pertanyaan: 'Apakah wajib mempunyai laptop berspesifikasi tinggi?',
-          jawaban: 'Tidak perlu. Semua tools AI yang diajarkan berbasis web (cloud) dan dapat diakses dari browser standar.',
-          urutan: 1,
-          status: 'aktif'
-        },
-        {
-          faq_id: 'FAQ-0003',
-          modul_id: 'MOD-002',
-          pertanyaan: 'Apakah membutuhkan domain atau hosting berbayar?',
-          jawaban: 'Tidak. Backend menggunakan Google Apps Script (gratis) dan frontend di-deploy di Vercel (gratis).',
-          urutan: 1,
-          status: 'aktif'
-        }
-      ],
-      paket: [
-        {
-          paket_id: 'PKT-001',
-          nama_paket: 'Modul 1 Design & Video AI',
-          harga: 119000,
-          link_checkout: 'https://lynk.id/asix_studio/x4gmvp2k52pl/checkout',
-          status: 'aktif',
-          urutan: 1,
-          modul_ids: ['MOD-001']
-        },
-        {
-          paket_id: 'PKT-002',
-          nama_paket: 'Modul 2 Web App Google Apps Script',
-          harga: 229000,
-          link_checkout: 'https://lynk.id/asix_studio/5mde09xlwvz4/checkout',
-          status: 'aktif',
-          urutan: 2,
-          modul_ids: ['MOD-002']
-        },
-        {
-          paket_id: 'PKT-003',
-          nama_paket: 'Bundle Plus (Semua Modul)',
-          harga: 339000,
-          link_checkout: 'https://lynk.id/asix_studio/lrlx4ew0812e/checkout',
-          status: 'aktif',
-          urutan: 3,
-          modul_ids: ['MOD-001', 'MOD-002', 'MOD-003']
-        }
-      ]
+      user: null,
+      moduls: [],
+      materi: [],
+      konten: [],
+      faq: [],
+      paket: [],
+      akses: [],
+      today: []
     };
 
     /**
@@ -3498,32 +3251,21 @@
      */
     function apiFallback_(action, params) {
       if (action === 'apiLogin') {
-        const email = (params.email || '').toLowerCase().trim();
-        let role = 'member';
-        if (email.includes('admin')) role = 'super_admin';
-        const user = {
-          member_id: 'MBR-0001',
-          nama: email.includes('admin') ? 'Super Admin Asix' : 'Member Asix',
-          email: email,
-          whatsapp: '628123456789',
-          role: role,
-          status: 'aktif'
-        };
-        return { ok: true, data: { token: 'mock-token-aac', user: user } };
+        return { ok: false, error: 'Aplikasi dalam mode offline atau API belum terhubung. Silakan konfigurasi API_URL.' };
       }
       if (action === 'apiDashboard') {
         return {
           ok: true,
           data: {
-            user: currentAuthUser || DUMMY_FALLBACK.user,
-            modul_dimiliki: DUMMY_FALLBACK.moduls.filter(m => m.is_owned),
-            modul_terkunci: DUMMY_FALLBACK.moduls.filter(m => !m.is_owned),
-            today_terbaru: DUMMY_FALLBACK.today
+            user: currentAuthUser || null,
+            modul_dimiliki: (DUMMY_FALLBACK.moduls || []).filter(m => m.is_owned),
+            modul_terkunci: (DUMMY_FALLBACK.moduls || []).filter(m => !m.is_owned),
+            today_terbaru: DUMMY_FALLBACK.today || []
           }
         };
       }
       if (action === 'apiModulList') {
-        return { ok: true, data: { moduls: DUMMY_FALLBACK.moduls } };
+        return { ok: true, data: { moduls: DUMMY_FALLBACK.moduls || [] } };
       }
       if (action === 'apiLogAktivitas') {
         const count = Array.isArray(params.events) ? params.events.length : 0;
@@ -3541,21 +3283,14 @@
             per_hari: [],
             modul_teratas: [],
             top_member: [],
-            klik_beli_per_paket: [
-              { paket_id: 'PKT-001', judul: 'Modul 1 Design & Video AI', jumlah: 0 },
-              { paket_id: 'PKT-002', judul: 'Modul 2 Web App Google Apps Script', jumlah: 0 },
-              { paket_id: 'PKT-003', judul: 'Bundle Plus (Semua Modul)', jumlah: 0 },
-              { paket_id: 'PKT-004', judul: 'Paket 4', jumlah: 0 },
-              { paket_id: 'PKT-005', judul: 'Paket 5', jumlah: 0 },
-              { paket_id: 'PKT-006', judul: 'Paket 6', jumlah: 0 }
-            ],
+            klik_beli_per_paket: [],
             klik_beli_lainnya: 0
           }
         };
       }
       if (action === 'apiModulDetail') {
-        const modul = DUMMY_FALLBACK.moduls.find(m => m.modul_id === params.modul_id) || DUMMY_FALLBACK.moduls[0];
-        const materiList = DUMMY_FALLBACK.materi.filter(m => m.modul_id === modul.modul_id);
+        const modul = (DUMMY_FALLBACK.moduls || []).find(m => m.modul_id === params.modul_id) || null;
+        const materiList = (DUMMY_FALLBACK.materi || []).filter(m => modul && m.modul_id === modul.modul_id);
         const sections = {};
         materiList.forEach(m => {
           const sec = m.bagian || 'Materi Utama';
@@ -3727,9 +3462,7 @@
         return {
           ok: true,
           data: {
-            members: [
-              { member_id: 'MBR-0002', nama: 'Budi Santoso', email: 'budi@mail.com', whatsapp: '628123456789', status: 'aktif' }
-            ]
+            members: []
           }
         };
       }
@@ -3740,18 +3473,17 @@
         return {
           ok: true,
           data: {
-            items: [
-              { member_id: 'MBR-0002', nama: 'Budi Santoso', email: 'budi@mail.com', whatsapp: '628123456789', role: 'admin_modul', status: 'aktif' }
-            ],
-            total: 1
+            items: [],
+            total: 0
           }
         };
       }
       if (action === 'apiAdminPaketList') {
-        return { ok: true, data: { items: DUMMY_FALLBACK.paket } };
+        return { ok: true, data: { items: DUMMY_FALLBACK.paket || [] } };
       }
       if (action === 'apiAdminPaketSave') {
         const pId = params.paket_id;
+        if (!DUMMY_FALLBACK.paket) DUMMY_FALLBACK.paket = [];
         if (pId) {
           const idx = DUMMY_FALLBACK.paket.findIndex(p => p.paket_id === pId);
           if (idx !== -1) {
@@ -3778,19 +3510,7 @@
         return { ok: true, data: { message: 'Paket berhasil disimpan (Simulasi Lokal)' } };
       }
       if (action === 'apiAdminAksesList') {
-        if (!DUMMY_FALLBACK.akses) {
-          DUMMY_FALLBACK.akses = [
-            {
-              akses_id: 'AKS-20261110-0001',
-              member_id: 'MBR-0001',
-              paket_id: 'PKT-001',
-              status: 'aktif',
-              tanggal_aktif: '2026-11-10 10:00:00',
-              dicatat_oleh: 'MBR-0001',
-              catatan: 'Pembayaran Lynk.id'
-            }
-          ];
-        }
+        if (!DUMMY_FALLBACK.akses) DUMMY_FALLBACK.akses = [];
         return { ok: true, data: { items: DUMMY_FALLBACK.akses, total: DUMMY_FALLBACK.akses.length } };
       }
       if (action === 'apiAdminAksesAktifkan') {
@@ -3803,7 +3523,7 @@
           paket_id: params.paket_id,
           status: 'aktif',
           tanggal_aktif: new Date().toLocaleString('id-ID'),
-          dicatat_oleh: currentAuthUser ? currentAuthUser.member_id : 'MBR-0001',
+          dicatat_oleh: currentAuthUser ? currentAuthUser.member_id : '',
           catatan: params.catatan || 'Aktivasi manual oleh admin'
         };
         DUMMY_FALLBACK.akses.unshift(newAkses);
@@ -3932,7 +3652,27 @@
     /**
      * Inisialisasi Google Sign-In button di kartu login
      */
+    function loadGoogleIdentityScript_() {
+      if (!isGoogleLoginActive_()) return;
+      if (document.getElementById('google-gsi-client-script')) return;
+      const s = document.createElement('script');
+      s.id = 'google-gsi-client-script';
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.async = true;
+      s.defer = true;
+      s.onload = () => {
+        if (typeof initGoogleLogin === 'function') initGoogleLogin();
+      };
+      document.head.appendChild(s);
+    }
+
     function initGoogleLogin() {
+      if (!isGoogleLoginActive_()) {
+        const section = document.getElementById('google-login-section');
+        if (section) section.style.display = 'none';
+        return;
+      }
+
       // 1. Protokol file: tidak didukung oleh Google Identity Services
       if (window.location && window.location.protocol === 'file:') {
         return;
@@ -3991,7 +3731,16 @@
      */
     function setupGoogleLoginInit() {
       if (window.location && window.location.protocol === 'file:') return;
+      if (!isGoogleLoginActive_()) {
+        const section = document.getElementById('google-login-section');
+        if (section) section.style.display = 'none';
+        return;
+      }
+
       if (isGoogleLoginInitialized) return;
+
+      // Muat skrip Google Identity secara dinamis jika diizinkan oleh saklar
+      loadGoogleIdentityScript_();
 
       // Jika pustaka Google sudah siap, langsung inisialisasi
       if (typeof window.google !== 'undefined' && window.google.accounts && window.google.accounts.id) {
@@ -5206,6 +4955,7 @@
       if (!mat) return;
 
       currentPlayingMateri = mat;
+      smallPlayerBackupHtml = null;
 
       // Update active highlight di list kurikulum
       document.querySelectorAll('.materi-row').forEach(el => el.classList.remove('active'));
@@ -5337,8 +5087,10 @@
     }
 
     /**
-     * Membuka Pemutar Materi Layar Penuh (Perbaikan 2)
+     * Membuka Pemutar Materi Layar Penuh (Perbaikan 2 & P2)
      */
+    let smallPlayerBackupHtml = null;
+
     function openFullscreenMateri() {
       if (!currentPlayingMateri || !currentPlayingMateri.url) {
         showToast('Tidak ada materi aktif untuk ditampilkan layar penuh.');
@@ -5356,46 +5108,112 @@
         return;
       }
 
+      const playerBox = document.getElementById('player-frame-box');
+      const isFsApiSupported = playerBox && (
+        typeof playerBox.requestFullscreen === 'function' ||
+        typeof playerBox.webkitRequestFullscreen === 'function'
+      );
+
+      if (isFsApiSupported) {
+        const fsElement = document.fullscreenElement || document.webkitFullscreenElement;
+        if (fsElement) {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+          return;
+        }
+
+        try {
+          const p = playerBox.requestFullscreen ? playerBox.requestFullscreen() : playerBox.webkitRequestFullscreen();
+          if (p && typeof p.catch === 'function') {
+            p.catch(() => {
+              openFullscreenMateriOverlay_(embedInfo);
+            });
+          }
+          return;
+        } catch (err) {
+          openFullscreenMateriOverlay_(embedInfo);
+          return;
+        }
+      }
+
+      // Fallback untuk browser yang tidak mendukung Fullscreen API (misal iOS Safari iPhone)
+      openFullscreenMateriOverlay_(embedInfo);
+    }
+
+    function openFullscreenMateriOverlay_(embedInfo) {
       const overlay = document.getElementById('overlay-fullscreen-materi');
       const box = document.getElementById('fullscreen-frame-box');
       const title = document.getElementById('fullscreen-materi-title');
+      const playerBox = document.getElementById('player-frame-box');
 
-      title.textContent = currentPlayingMateri.judul || 'Materi Pembelajaran';
+      if (title) title.textContent = (currentPlayingMateri && currentPlayingMateri.judul) || 'Materi Pembelajaran';
 
-      if (embedInfo.type === 'youtube') {
-        box.innerHTML = `
-          <iframe 
-            src="${escapeAttr(embedInfo.embedUrl)}" 
-            style="width: 100%; height: 100%; border: 0;"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-            referrerpolicy="strict-origin-when-cross-origin" 
-            allowfullscreen>
-          </iframe>
+      // Hentikan pemutar kecil dan pasang placeholder agar suara tidak berbunyi dobel
+      if (playerBox) {
+        smallPlayerBackupHtml = playerBox.innerHTML;
+        playerBox.innerHTML = `
+          <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: #9CA3AF; padding: 20px; text-align: center; box-sizing: border-box; font-size: 13px;">
+            <span style="font-size: 24px; margin-bottom: 8px;">📺</span>
+            <span>Sedang diputar di layar penuh</span>
+          </div>
         `;
-      } else if (embedInfo.type === 'drive') {
-        box.innerHTML = `
-          <iframe 
-            src="${escapeAttr(embedInfo.embedUrl)}" 
-            style="width: 100%; height: 100%; border: 0;"
-            allow="autoplay; encrypted-media; picture-in-picture" 
-            allowfullscreen>
-          </iframe>
-        `;
-      } else {
-        showToast('Link materi tidak valid.');
-        return;
       }
 
-      overlay.style.display = 'flex';
+      if (box) {
+        if (embedInfo.type === 'youtube') {
+          box.innerHTML = `
+            <iframe 
+              src="${escapeAttr(embedInfo.embedUrl)}" 
+              style="width: 100%; height: 100%; border: 0;"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+              referrerpolicy="strict-origin-when-cross-origin" 
+              allowfullscreen>
+            </iframe>
+          `;
+        } else if (embedInfo.type === 'drive') {
+          box.innerHTML = `
+            <iframe 
+              src="${escapeAttr(embedInfo.embedUrl)}" 
+              style="width: 100%; height: 100%; border: 0;"
+              allow="autoplay; encrypted-media; picture-in-picture" 
+              allowfullscreen>
+            </iframe>
+          `;
+        }
+      }
+
+      if (overlay) overlay.style.display = 'flex';
       document.body.style.overflow = 'hidden';
     }
 
     function closeFullscreenMateri() {
       const overlay = document.getElementById('overlay-fullscreen-materi');
       const box = document.getElementById('fullscreen-frame-box');
+      const playerBox = document.getElementById('player-frame-box');
+
+      // Keluar dari Fullscreen API jika aktif
+      const fsElement = document.fullscreenElement || document.webkitFullscreenElement;
+      if (fsElement) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+      }
+
+      // Bersihkan frame overlay dan kembalikan overflow body
       if (box) box.innerHTML = '';
       if (overlay) overlay.style.display = 'none';
       document.body.style.overflow = '';
+
+      // Pulihkan pemutar kecil dari cadangan jika ada
+      if (playerBox && smallPlayerBackupHtml !== null) {
+        playerBox.innerHTML = smallPlayerBackupHtml;
+        smallPlayerBackupHtml = null;
+      }
     }
 
     function openMateriInNewTab() {
