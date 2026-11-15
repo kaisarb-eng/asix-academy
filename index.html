@@ -1802,11 +1802,11 @@
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; flex-wrap: wrap;">
                 <span id="player-status-badge" style="font-size: 12px; font-weight: 700; color: var(--asix-text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Pemutar Materi</span>
                 <div style="display: flex; gap: 8px;">
-                  <button type="button" class="btn-materi-action" id="btn-materi-fullscreen" onclick="openFullscreenMateri()">
+                  <button type="button" class="btn-materi-action" id="btn-materi-fullscreen" onclick="openFullscreenMateri()" style="display: none;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
                     Layar Penuh
                   </button>
-                  <button type="button" class="btn-materi-action" id="btn-materi-newtab" onclick="openMateriInNewTab()">
+                  <button type="button" class="btn-materi-action" id="btn-materi-newtab" onclick="openMateriInNewTab()" style="display: none;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                     Buka di Tab Baru
                   </button>
@@ -2817,12 +2817,12 @@
           <div class="form-group">
             <label>Password Awal <span style="color:red">*</span></label>
             <div class="password-wrapper">
-              <input type="password" id="form-member-password" class="form-control" placeholder="Ketik password awal..." required minlength="6">
+              <input type="password" id="form-member-password" class="form-control" placeholder="Ketik password awal (min. 8 karakter)..." required minlength="8">
               <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('form-member-password')" aria-label="Lihat Password">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
               </button>
             </div>
-            <span style="font-size: 11px; color: var(--asix-text-muted); margin-top: 4px; display: block;">Super admin menentukan password awal member secara manual.</span>
+            <span style="font-size: 11px; color: var(--asix-text-muted); margin-top: 4px; display: block;">Super admin menentukan password awal member secara manual (minimal 8 karakter).</span>
           </div>
         </div>
         <div class="modal-footer">
@@ -2854,12 +2854,12 @@
           <div class="form-group">
             <label>Password Baru <span style="color:red">*</span></label>
             <div class="password-wrapper">
-              <input type="password" id="form-reset-password-baru" class="form-control" placeholder="Ketik password baru..." required minlength="6">
+              <input type="password" id="form-reset-password-baru" class="form-control" placeholder="Ketik password baru (min. 8 karakter)..." required minlength="8">
               <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('form-reset-password-baru')" aria-label="Lihat Password">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
               </button>
             </div>
-            <span style="font-size: 11px; color: var(--asix-text-muted); margin-top: 4px; display: block;">Super admin dapat langsung memasukkan password baru tanpa perlu password lama.</span>
+            <span style="font-size: 11px; color: var(--asix-text-muted); margin-top: 4px; display: block;">Super admin dapat langsung memasukkan password baru tanpa perlu password lama (minimal 8 karakter).</span>
           </div>
         </div>
         <div class="modal-footer">
@@ -4825,13 +4825,13 @@
 
       if (hasAccess) {
         badgeHtml = `<span class="badge-dimiliki">✓ Dimiliki</span>`;
-        actionBtn = `<button class="btn-asix-primary" style="font-size: 12px; padding: 7px 14px;" onclick="openModulDetail('${safeModulId}')">Buka Modul →</button>`;
+        actionBtn = `<button class="btn-asix-primary" style="font-size: 12px; padding: 7px 14px;" data-modul-id="${safeModulId}" data-modul-title="${safeTitle}" onclick="openModulDetail(this.getAttribute('data-modul-id'), this.getAttribute('data-modul-title'))">Buka Modul →</button>`;
       } else if (isSegeraHadir) {
         badgeHtml = `<span class="badge-segera-hadir">⏳ Segera Hadir</span>`;
         actionBtn = `<button type="button" class="btn-segera-hadir" disabled>Segera Hadir</button>`;
       } else {
         badgeHtml = `<span class="badge-terkunci">🔒 Terkunci</span>`;
-        actionBtn = `<button class="btn-asix-secondary" style="font-size: 12px; padding: 7px 14px;" onclick="openModulDetail('${safeModulId}')">Preview & Beli Modul</button>`;
+        actionBtn = `<button class="btn-asix-secondary" style="font-size: 12px; padding: 7px 14px;" data-modul-id="${safeModulId}" data-modul-title="${safeTitle}" onclick="openModulDetail(this.getAttribute('data-modul-id'), this.getAttribute('data-modul-title'))">Preview & Beli Modul</button>`;
       }
 
       return `
@@ -4916,12 +4916,105 @@
      * FITUR 3 & 6: DETAIL MODUL & PEMUTAR VIDEO
      * =====================================================================
      */
-    async function openModulDetail(modulId) {
+    let openModulDetailRequestId = 0;
+
+    async function openModulDetail(modulId, initialTitle) {
       try { catatEvent('buka_modul', modulId); } catch (e) {}
+
+      const currentReqId = ++openModulDetailRequestId;
       navigate('modul-detail');
+
+      // Reset state materi aktif
+      activeModulDetail = null;
+      currentPlayingMateri = null;
+
+      // Ambil elemen DOM
+      const titleEl = document.getElementById('detail-modul-title');
+      const badgeEl = document.getElementById('detail-modul-badge');
+      const ctaBox = document.getElementById('locked-modul-cta-box');
+      const playerBox = document.getElementById('player-frame-box');
+      const backupBox = document.getElementById('player-backup-link-container');
+      const statusBadge = document.getElementById('player-status-badge');
+      const btnFullscreen = document.getElementById('btn-materi-fullscreen');
+      const btnNewTab = document.getElementById('btn-materi-newtab');
+      const matTitle = document.getElementById('current-materi-title');
+      const matDesc = document.getElementById('current-materi-desc');
+      const accordion = document.getElementById('curriculum-accordion-list');
+
+      // Sembunyikan kontrol pemutar saat masih memuat
+      if (btnFullscreen) btnFullscreen.style.display = 'none';
+      if (btnNewTab) btnNewTab.style.display = 'none';
+      if (backupBox) backupBox.innerHTML = '';
+      if (ctaBox) ctaBox.style.display = 'none';
+      if (statusBadge) statusBadge.textContent = 'Pemutar Materi';
+
+      // Cek apakah ada initialTitle dari parameter atau atribut kartu di DOM
+      if (!initialTitle) {
+        const cardBtn = document.querySelector(`[data-modul-id="${modulId}"]`);
+        if (cardBtn && cardBtn.getAttribute('data-modul-title')) {
+          initialTitle = cardBtn.getAttribute('data-modul-title');
+        }
+      }
+
+      // Tampilkan keadaan memuat segera tanpa menampilkan konten modul sebelumnya
+      if (titleEl) titleEl.textContent = initialTitle || 'Memuat modul...';
+      if (badgeEl) badgeEl.innerHTML = '<span class="badge-preview" style="font-size: 11px;">Memuat...</span>';
+
+      if (playerBox) {
+        playerBox.innerHTML = `
+          <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
+            <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">⏳ Memuat Modul...</p>
+            <p style="font-size: 13px; color: #9CA3AF; margin: 0; max-width: 90%;">Sedang mengambil data modul dan materi.</p>
+          </div>
+        `;
+      }
+
+      if (matTitle) matTitle.textContent = initialTitle ? `Modul: ${initialTitle}` : 'Memuat Materi...';
+      if (matDesc) matDesc.textContent = 'Mohon tunggu sebentar, sedang mengambil kurikulum materi...';
+
+      if (accordion) {
+        accordion.innerHTML = `
+          <div style="text-align: center; padding: 32px 16px; color: var(--asix-text-muted); font-size: 13px;">
+            ⏳ Sedang memuat kurikulum materi...
+          </div>
+        `;
+      }
+
       const res = await apiCall('apiModulDetail', { modul_id: modulId });
+
+      // Cegah balapan (race condition): jika ada klik modul lain yang lebih baru, abaikan hasil ini
+      if (currentReqId !== openModulDetailRequestId) {
+        return;
+      }
+
       if (!res.ok) {
-        showToast(res.error || 'Gagal memuat detail modul.');
+        const errMsg = res.error || 'Gagal memuat detail modul.';
+        showToast(errMsg);
+
+        if (titleEl) titleEl.textContent = initialTitle || 'Gagal Memuat Modul';
+        if (badgeEl) badgeEl.innerHTML = '<span class="badge-terkunci" style="background: rgba(239, 68, 68, 0.15); color: #EF4444;">Error</span>';
+
+        if (playerBox) {
+          playerBox.innerHTML = `
+            <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
+              <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--asix-danger, #EF4444);">⚠️ Gagal Memuat Modul</p>
+              <p style="font-size: 13px; color: #9CA3AF; margin-bottom: 16px; max-width: 90%;">${escapeHtml(errMsg)}</p>
+              <button type="button" class="btn-asix-secondary" onclick="navigate('class')">← Kembali ke Class</button>
+            </div>
+          `;
+        }
+
+        if (accordion) {
+          accordion.innerHTML = `
+            <div style="text-align: center; padding: 28px 16px; color: var(--asix-text-muted); font-size: 13px;">
+              <p style="margin-bottom: 12px; color: var(--asix-danger, #EF4444); font-weight: 600;">${escapeHtml(errMsg)}</p>
+              <button type="button" class="btn-asix-secondary" onclick="navigate('class')" style="font-size: 12px; padding: 6px 14px;">← Kembali ke Class</button>
+            </div>
+          `;
+        }
+
+        if (matTitle) matTitle.textContent = 'Gagal Memuat Modul';
+        if (matDesc) matDesc.textContent = errMsg;
         return;
       }
 
@@ -4932,99 +5025,117 @@
       const hasAccess = isOwned || isSuperAdmin;
       const isSegeraHadir = !hasAccess && isModulSegeraHadir(modulId);
 
-      document.getElementById('detail-modul-title').textContent = m.nama_modul;
+      if (titleEl) titleEl.textContent = m.nama_modul;
 
-      const badgeEl = document.getElementById('detail-modul-badge');
-      if (hasAccess) {
-        badgeEl.innerHTML = `<span class="badge-dimiliki">Dimiliki</span>`;
-      } else if (isSegeraHadir) {
-        badgeEl.innerHTML = `<span class="badge-segera-hadir">⏳ Segera Hadir</span>`;
-      } else {
-        badgeEl.innerHTML = `<span class="badge-terkunci">Terkunci</span>`;
+      if (badgeEl) {
+        if (hasAccess) {
+          badgeEl.innerHTML = `<span class="badge-dimiliki">Dimiliki</span>`;
+        } else if (isSegeraHadir) {
+          badgeEl.innerHTML = `<span class="badge-segera-hadir">⏳ Segera Hadir</span>`;
+        } else {
+          badgeEl.innerHTML = `<span class="badge-terkunci">Terkunci</span>`;
+        }
       }
 
       // Pengaturan CTA Beli jika Terkunci / Segera Hadir
-      const ctaBox = document.getElementById('locked-modul-cta-box');
-      const playerBox = document.getElementById('player-frame-box');
-
-      if (hasAccess) {
-        ctaBox.style.display = 'none';
-      } else if (isSegeraHadir) {
-        ctaBox.style.display = 'block';
-        ctaBox.style.border = '1px solid #CBD5E1';
-        ctaBox.style.background = '#F8FAFC';
-        ctaBox.innerHTML = `
-          <h3 style="color: #475569; margin-bottom: 6px;">Modul Ini Segera Hadir ⏳</h3>
-          <p style="font-size: 13px; color: var(--asix-text-muted); margin: 0; line-height: 1.5;">
-            Materi untuk modul ini sedang dalam tahap persiapan dan akan segera dirilis. Pantau terus update terbaru di Asix Academy!
-          </p>
-        `;
-        if (playerBox) {
-          playerBox.innerHTML = `
-            <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
-              <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">⏳ Modul Segera Hadir</p>
-              <p style="font-size: 13px; color: #9CA3AF; margin: 0; max-width: 90%;">Materi sedang dipersiapkan oleh tim instruktur.</p>
+      if (ctaBox) {
+        if (hasAccess) {
+          ctaBox.style.display = 'none';
+        } else if (isSegeraHadir) {
+          ctaBox.style.display = 'block';
+          ctaBox.style.border = '1px solid #CBD5E1';
+          ctaBox.style.background = '#F8FAFC';
+          ctaBox.innerHTML = `
+            <h3 style="color: #475569; margin-bottom: 6px;">Modul Ini Segera Hadir ⏳</h3>
+            <p style="font-size: 13px; color: var(--asix-text-muted); margin: 0; line-height: 1.5;">
+              Materi untuk modul ini sedang dalam tahap persiapan dan akan segera dirilis. Pantau terus update terbaru di Asix Academy!
+            </p>
+          `;
+          if (playerBox) {
+            playerBox.innerHTML = `
+              <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
+                <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">⏳ Modul Segera Hadir</p>
+                <p style="font-size: 13px; color: #9CA3AF; margin: 0; max-width: 90%;">Materi sedang dipersiapkan oleh tim instruktur.</p>
+              </div>
+            `;
+          }
+        } else {
+          ctaBox.style.display = 'block';
+          ctaBox.style.borderColor = 'var(--asix-orange)';
+          ctaBox.style.background = 'var(--asix-orange-light)';
+          const targetPaketId = getLynkModulPaketId(m);
+          const rawLynkUrl = getLynkModul(m);
+          const safeLynkUrl = isHttpsUrl_(rawLynkUrl) ? rawLynkUrl : LYNK_URL;
+          ctaBox.innerHTML = `
+            <h3 style="color: var(--asix-orange); margin-bottom: 6px;">Modul Ini Masih Terkunci 🔒</h3>
+            <p style="font-size: 13px; color: var(--asix-black); margin-bottom: 16px;" id="locked-preview-text">${escapeHtml(m.preview_text || 'Beli paket untuk membuka akses materi lengkap.')}</p>
+            <div id="locked-package-buttons" style="display: flex; flex-wrap: wrap; gap: 10px;">
+              <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start; margin-top: 10px;">
+                <a href="${escapeAttr(safeLynkUrl)}" onclick="try{catatEvent('klik_beli', '${escapeAttr(targetPaketId)}');}catch(e){}" target="_blank" rel="noopener noreferrer" class="btn-asix-primary" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; padding: 11px 20px; font-weight: 600;">
+                  Daftar / Pilih Kelas di Lynk.id ↗
+                </a>
+                <p style="font-size: 12px; color: var(--asix-text-muted); margin: 0;">Setelah daftar, admin akan membuka akses kelas yang kamu pilih.</p>
+              </div>
             </div>
           `;
         }
-      } else {
-        ctaBox.style.display = 'block';
-        ctaBox.style.borderColor = 'var(--asix-orange)';
-        ctaBox.style.background = 'var(--asix-orange-light)';
-        const targetPaketId = getLynkModulPaketId(m);
-        const rawLynkUrl = getLynkModul(m);
-        const safeLynkUrl = isHttpsUrl_(rawLynkUrl) ? rawLynkUrl : LYNK_URL;
-        ctaBox.innerHTML = `
-          <h3 style="color: var(--asix-orange); margin-bottom: 6px;">Modul Ini Masih Terkunci 🔒</h3>
-          <p style="font-size: 13px; color: var(--asix-black); margin-bottom: 16px;" id="locked-preview-text">${escapeHtml(m.preview_text || 'Beli paket untuk membuka akses materi lengkap.')}</p>
-          <div id="locked-package-buttons" style="display: flex; flex-wrap: wrap; gap: 10px;">
-            <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start; margin-top: 10px;">
-              <a href="${escapeAttr(safeLynkUrl)}" onclick="try{catatEvent('klik_beli', '${escapeAttr(targetPaketId)}');}catch(e){}" target="_blank" rel="noopener noreferrer" class="btn-asix-primary" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; padding: 11px 20px; font-weight: 600;">
-                Daftar / Pilih Kelas di Lynk.id ↗
-              </a>
-              <p style="font-size: 12px; color: var(--asix-text-muted); margin: 0;">Setelah daftar, admin akan membuka akses kelas yang kamu pilih.</p>
-            </div>
-          </div>
-        `;
       }
 
       // Render Kurikulum (Perbaikan 1: Penataan rapi tanpa tabrakan judul dan badge)
-      const accordion = document.getElementById('curriculum-accordion-list');
       const sections = res.data.sections || {};
       const sectionKeys = Object.keys(sections);
 
       if (sectionKeys.length === 0) {
-        accordion.innerHTML = isSegeraHadir
-          ? '<p style="font-size: 13px; color: var(--asix-text-muted); padding: 8px 0;">Materi untuk modul ini sedang dipersiapkan.</p>'
-          : '<p style="font-size: 13px; color: var(--asix-text-muted); padding: 8px 0;">Belum ada materi pada modul ini.</p>';
+        if (accordion) {
+          accordion.innerHTML = isSegeraHadir
+            ? '<p style="font-size: 13px; color: var(--asix-text-muted); padding: 8px 0;">Materi untuk modul ini sedang dipersiapkan.</p>'
+            : '<p style="font-size: 13px; color: var(--asix-text-muted); padding: 8px 0;">Belum ada materi pada modul ini.</p>';
+        }
+        if (matTitle) matTitle.textContent = m.nama_modul;
+        if (matDesc) matDesc.textContent = m.deskripsi || 'Belum ada materi pada modul ini.';
       } else {
-        accordion.innerHTML = sectionKeys.map((secName, idx) => `
-          <div class="curriculum-section">
-            <div class="curriculum-section-title">
-              <span>${escapeHtml(secName)}</span>
-              <span style="font-size: 11px; color: var(--asix-text-muted);">${sections[secName].length} Materi</span>
-            </div>
-            <div>
-              ${sections[secName].map(mat => `
-                <div class="materi-row" id="materi-row-${escapeAttr(mat.materi_id)}" onclick="playMateri('${escapeAttr(mat.materi_id)}')">
-                  <div style="display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 0; padding-right: 12px;">
-                    <span style="font-size: 12px; color: var(--asix-text-muted); font-weight: 700; flex-shrink: 0; margin-top: 2px;">#${escapeHtml(String(mat.urutan))}</span>
-                    <span style="font-size: 13px; font-weight: 600; line-height: 1.4; word-break: break-word; color: var(--asix-black);">${escapeHtml(mat.judul)}</span>
+        if (accordion) {
+          accordion.innerHTML = sectionKeys.map((secName, idx) => `
+            <div class="curriculum-section">
+              <div class="curriculum-section-title">
+                <span>${escapeHtml(secName)}</span>
+                <span style="font-size: 11px; color: var(--asix-text-muted);">${sections[secName].length} Materi</span>
+              </div>
+              <div>
+                ${sections[secName].map(mat => `
+                  <div class="materi-row" id="materi-row-${escapeAttr(mat.materi_id)}" onclick="playMateri('${escapeAttr(mat.materi_id)}')">
+                    <div style="display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 0; padding-right: 12px;">
+                      <span style="font-size: 12px; color: var(--asix-text-muted); font-weight: 700; flex-shrink: 0; margin-top: 2px;">#${escapeHtml(String(mat.urutan))}</span>
+                      <span style="font-size: 13px; font-weight: 600; line-height: 1.4; word-break: break-word; color: var(--asix-black);">${escapeHtml(mat.judul)}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
+                      ${mat.is_preview ? '<span class="badge-preview" style="font-size: 10px; padding: 2px 6px;">Preview</span>' : ''}
+                      <span style="font-size: 13px; color: var(--asix-text-muted);">${!isOwned && !mat.is_preview ? '🔒' : '▶'}</span>
+                    </div>
                   </div>
-                  <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
-                    ${mat.is_preview ? '<span class="badge-preview" style="font-size: 10px; padding: 2px 6px;">Preview</span>' : ''}
-                    <span style="font-size: 13px; color: var(--asix-text-muted);">${!isOwned && !mat.is_preview ? '🔒' : '▶'}</span>
-                  </div>
-                </div>
-              `).join('')}
+                `).join('')}
+              </div>
             </div>
-          </div>
-        `).join('');
+          `).join('');
+        }
 
         // Putar materi pertama yang diizinkan
         const firstMateri = res.data.materi && res.data.materi[0];
         if (firstMateri && (hasAccess || firstMateri.is_preview)) {
           playMateri(firstMateri.materi_id);
+        } else if (playerBox && !hasAccess) {
+          const targetPaketId = getLynkModulPaketId(m);
+          const rawLynkUrl = getLynkModul(m);
+          const safeLynkUrl = isHttpsUrl_(rawLynkUrl) ? rawLynkUrl : LYNK_URL;
+          playerBox.innerHTML = `
+            <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
+              <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">🔒 Modul Terkunci</p>
+              <p style="font-size: 13px; color: #9CA3AF; margin-bottom: 16px; max-width: 90%;">Beli paket akses untuk mulai menonton materi pada modul ini.</p>
+              <a href="${escapeAttr(safeLynkUrl)}" onclick="try{catatEvent('klik_beli', '${escapeAttr(targetPaketId)}');}catch(e){}" target="_blank" rel="noopener noreferrer" class="btn-asix-primary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">Beli Paket Akses di Lynk.id ↗</a>
+            </div>
+          `;
+          if (matTitle) matTitle.textContent = m.nama_modul;
+          if (matDesc) matDesc.textContent = m.deskripsi || 'Pilih materi preview di samping atau beli paket untuk membuka modul ini.';
         }
       }
     }
@@ -5101,40 +5212,52 @@
       const activeRow = document.getElementById(`materi-row-${mat.materi_id}`);
       if (activeRow) activeRow.classList.add('active');
 
-      document.getElementById('current-materi-title').textContent = mat.judul;
-      document.getElementById('current-materi-desc').textContent = mat.deskripsi || 'Tidak ada deskripsi tambahan.';
+      const matTitle = document.getElementById('current-materi-title');
+      const matDesc = document.getElementById('current-materi-desc');
+      if (matTitle) matTitle.textContent = mat.judul;
+      if (matDesc) matDesc.textContent = mat.deskripsi || 'Tidak ada deskripsi tambahan.';
 
       const box = document.getElementById('player-frame-box');
       const backupBox = document.getElementById('player-backup-link-container');
       const statusBadge = document.getElementById('player-status-badge');
+      const btnFullscreen = document.getElementById('btn-materi-fullscreen');
+      const btnNewTab = document.getElementById('btn-materi-newtab');
 
       if (statusBadge) {
         statusBadge.textContent = `Materi #${mat.urutan} • ${mat.tipe ? mat.tipe.toUpperCase() : 'VIDEO'}`;
       }
 
       if (!mat.url) {
+        if (btnFullscreen) btnFullscreen.style.display = 'none';
+        if (btnNewTab) btnNewTab.style.display = 'none';
         const currentModul = (activeModulDetail && activeModulDetail.modul) ? activeModulDetail.modul : null;
         const modulLynkUrl = getLynkModul(currentModul);
         const safeLynkUrl = isHttpsUrl_(modulLynkUrl) ? modulLynkUrl : LYNK_URL;
         const videoPaketId = getLynkModulPaketId(currentModul);
-        box.innerHTML = `
-          <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
-            <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">🔒 Materi Terkunci</p>
-            <p style="font-size: 13px; color: #9CA3AF; margin-bottom: 16px; max-width: 90%;">Materi ini hanya tersedia untuk member pemilik modul.</p>
-            <a href="${escapeAttr(safeLynkUrl)}" onclick="try{catatEvent('klik_beli', '${escapeAttr(videoPaketId)}');}catch(e){}" target="_blank" rel="noopener noreferrer" class="btn-asix-primary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">Beli Paket Akses di Lynk.id ↗</a>
-          </div>
-        `;
+        if (box) {
+          box.innerHTML = `
+            <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
+              <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">🔒 Materi Terkunci</p>
+              <p style="font-size: 13px; color: #9CA3AF; margin-bottom: 16px; max-width: 90%;">Materi ini hanya tersedia untuk member pemilik modul.</p>
+              <a href="${escapeAttr(safeLynkUrl)}" onclick="try{catatEvent('klik_beli', '${escapeAttr(videoPaketId)}');}catch(e){}" target="_blank" rel="noopener noreferrer" class="btn-asix-primary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">Beli Paket Akses di Lynk.id ↗</a>
+            </div>
+          `;
+        }
         if (backupBox) backupBox.innerHTML = '';
         return;
       }
 
       if (!isHttpsUrl_(mat.url)) {
-        box.innerHTML = `
-          <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
-            <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--asix-danger, #EF4444);">⚠️ Link Materi Tidak Valid</p>
-            <p style="font-size: 13px; color: #9CA3AF; margin: 0; max-width: 90%;">Link materi tidak valid atau tidak menggunakan protokol HTTPS yang aman.</p>
-          </div>
-        `;
+        if (btnFullscreen) btnFullscreen.style.display = 'none';
+        if (btnNewTab) btnNewTab.style.display = 'none';
+        if (box) {
+          box.innerHTML = `
+            <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
+              <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--asix-danger, #EF4444);">⚠️ Link Materi Tidak Valid</p>
+              <p style="font-size: 13px; color: #9CA3AF; margin: 0; max-width: 90%;">Link materi tidak valid atau tidak menggunakan protokol HTTPS yang aman.</p>
+            </div>
+          `;
+        }
         if (backupBox) backupBox.innerHTML = '';
         return;
       }
@@ -5142,14 +5265,18 @@
       const embedInfo = parseMateriEmbed(mat.url);
 
       if (embedInfo.type === 'youtube') {
-        box.innerHTML = `
-          <iframe 
-            src="${escapeAttr(embedInfo.embedUrl)}" 
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-            referrerpolicy="strict-origin-when-cross-origin" 
-            allowfullscreen>
-          </iframe>
-        `;
+        if (btnFullscreen) btnFullscreen.style.display = '';
+        if (btnNewTab) btnNewTab.style.display = '';
+        if (box) {
+          box.innerHTML = `
+            <iframe 
+              src="${escapeAttr(embedInfo.embedUrl)}" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+              referrerpolicy="strict-origin-when-cross-origin" 
+              allowfullscreen>
+            </iframe>
+          `;
+        }
         if (backupBox) {
           backupBox.innerHTML = `
             <a href="${escapeAttr(embedInfo.directUrl)}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: var(--asix-orange); font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
@@ -5158,13 +5285,17 @@
           `;
         }
       } else if (embedInfo.type === 'drive') {
-        box.innerHTML = `
-          <iframe 
-            src="${escapeAttr(embedInfo.embedUrl)}" 
-            allow="autoplay; encrypted-media; picture-in-picture" 
-            allowfullscreen>
-          </iframe>
-        `;
+        if (btnFullscreen) btnFullscreen.style.display = '';
+        if (btnNewTab) btnNewTab.style.display = '';
+        if (box) {
+          box.innerHTML = `
+            <iframe 
+              src="${escapeAttr(embedInfo.embedUrl)}" 
+              allow="autoplay; encrypted-media; picture-in-picture" 
+              allowfullscreen>
+            </iframe>
+          `;
+        }
         if (backupBox) {
           backupBox.innerHTML = `
             <a href="${escapeAttr(embedInfo.directUrl)}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: var(--asix-orange); font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
@@ -5173,26 +5304,34 @@
           `;
         }
       } else if (embedInfo.type === 'generic') {
-        box.innerHTML = `
-          <iframe 
-            src="${escapeAttr(embedInfo.embedUrl)}" 
-            allowfullscreen>
-          </iframe>
-        `;
-        if (backupBox) {
-          backupBox.innerHTML = `
-            <a href="${escapeAttr(embedInfo.directUrl)}" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: var(--asix-orange); font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
-              🔗 Buka Tautan Langsung ↗
-            </a>
+        // Tipe generic: sembunyikan Layar Penuh dan Buka di Tab Baru di header kontrol, kosongkan backupBox agar tidak ada dua tombol kembar
+        if (btnFullscreen) btnFullscreen.style.display = 'none';
+        if (btnNewTab) btnNewTab.style.display = 'none';
+        if (backupBox) backupBox.innerHTML = '';
+
+        if (box) {
+          box.innerHTML = `
+            <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #111111 0%, #2A2A2A 100%); color: white; padding: 24px; text-align: center; box-sizing: border-box;">
+              <h3 style="font-size: 18px; font-weight: 700; color: white; margin-bottom: 16px; max-width: 90%; line-height: 1.4;">${escapeHtml(mat.judul)}</h3>
+              ${isHttpsUrl_(embedInfo.directUrl) ? `
+                <a href="${escapeAttr(embedInfo.directUrl)}" target="_blank" rel="noopener noreferrer" class="btn-asix-primary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 20px; font-weight: 600; font-size: 13px;">
+                  Buka Tautan ↗
+                </a>
+              ` : ''}
+            </div>
           `;
         }
       } else {
-        box.innerHTML = `
-          <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
-            <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--asix-danger, #EF4444);">⚠️ Link Materi Tidak Valid</p>
-            <p style="font-size: 13px; color: #9CA3AF; margin: 0; max-width: 90%;">Link materi tidak valid atau tidak menggunakan protokol HTTPS yang aman.</p>
-          </div>
-        `;
+        if (btnFullscreen) btnFullscreen.style.display = 'none';
+        if (btnNewTab) btnNewTab.style.display = 'none';
+        if (box) {
+          box.innerHTML = `
+            <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
+              <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--asix-danger, #EF4444);">⚠️ Link Materi Tidak Valid</p>
+              <p style="font-size: 13px; color: #9CA3AF; margin: 0; max-width: 90%;">Link materi tidak valid atau tidak menggunakan protokol HTTPS yang aman.</p>
+            </div>
+          `;
+        }
         if (backupBox) backupBox.innerHTML = '';
       }
     }
@@ -5211,13 +5350,17 @@
         return;
       }
 
+      const embedInfo = parseMateriEmbed(currentPlayingMateri.url);
+      if (embedInfo.type === 'generic') {
+        showToast('Materi berupa tautan eksternal tidak dapat dibuka di layar penuh.');
+        return;
+      }
+
       const overlay = document.getElementById('overlay-fullscreen-materi');
       const box = document.getElementById('fullscreen-frame-box');
       const title = document.getElementById('fullscreen-materi-title');
 
       title.textContent = currentPlayingMateri.judul || 'Materi Pembelajaran';
-
-      const embedInfo = parseMateriEmbed(currentPlayingMateri.url);
 
       if (embedInfo.type === 'youtube') {
         box.innerHTML = `
@@ -5235,14 +5378,6 @@
             src="${escapeAttr(embedInfo.embedUrl)}" 
             style="width: 100%; height: 100%; border: 0;"
             allow="autoplay; encrypted-media; picture-in-picture" 
-            allowfullscreen>
-          </iframe>
-        `;
-      } else if (embedInfo.type === 'generic') {
-        box.innerHTML = `
-          <iframe 
-            src="${escapeAttr(embedInfo.embedUrl)}" 
-            style="width: 100%; height: 100%; border: 0;"
             allowfullscreen>
           </iframe>
         `;
@@ -6438,8 +6573,8 @@
         return;
       }
 
-      if (password.length < 6) {
-        showToast('Password awal minimal 6 karakter.');
+      if (password.length < 8) {
+        showToast('Password awal minimal 8 karakter.');
         return;
       }
 
@@ -6518,8 +6653,8 @@
         return;
       }
 
-      if (newPassword.length < 6) {
-        showToast('Password baru minimal 6 karakter.');
+      if (newPassword.length < 8) {
+        showToast('Password baru minimal 8 karakter.');
         return;
       }
 
