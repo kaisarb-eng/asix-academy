@@ -1502,7 +1502,6 @@
       </button>
 
       <div class="sidebar-brand" onclick="onBrandClick()">
-        <img src="logo-asix.png" alt="Asix Academy" class="sidebar-brand-logo" width="40" height="40" decoding="async" onerror="this.style.display='none'">
         <div class="sidebar-brand-text">ASIX ACADEMY</div>
       </div>
 
@@ -1581,9 +1580,7 @@
         </div>
 
         <!-- Logo Bundar Kecil Mode Mini HP (Langkah 5) -->
-        <div class="topbar-center-logo">
-          <img src="logo-asix.png" alt="Asix Academy" class="topbar-mini-logo" width="32" height="32" decoding="async" onerror="this.style.display='none'">
-        </div>
+        <div class="topbar-center-logo"></div>
 
         <div class="topbar-right">
           <div class="user-greeting" id="topbar-user-profile" style="cursor: pointer;" onclick="openGantiPasswordModal()" title="Klik untuk Ganti Password">
@@ -1605,7 +1602,6 @@
         <section id="view-login" class="view-section" style="max-width: 440px; margin: 40px auto;">
           <div class="asix-card" style="padding: 32px;">
             <div style="text-align: center; margin-bottom: 24px;">
-              <img src="logo-asix.png" alt="Asix Academy" class="login-brand-logo" width="92" height="92" loading="eager" decoding="async" onerror="this.style.display='none'">
               <h2>Login Asix Academy</h2>
               <p style="font-size: 13px; color: var(--asix-text-muted); margin-top: 6px;">Satu akun untuk seluruh modul dan konten Asix</p>
             </div>
@@ -3079,7 +3075,7 @@
       </div>
       <div class="modal-body" style="overflow-y: auto; padding: 20px;">
         <div id="detail-konten-cover-wrapper" style="width: 100%; max-height: 280px; overflow: hidden; border-radius: var(--asix-radius); margin-bottom: 16px; background: #111; display: none;">
-          <img id="detail-konten-cover" src="" alt="Cover" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: contain; max-height: 280px;">
+          <img id="detail-konten-cover" src="" alt="Cover" loading="eager" decoding="async" style="width: 100%; height: 100%; object-fit: contain; max-height: 280px;">
         </div>
         <h2 id="detail-konten-judul" style="font-size: 20px; font-weight: 700; margin-bottom: 12px; line-height: 1.4; color: var(--asix-black);">Judul Konten</h2>
         <div id="detail-konten-ringkasan-box" style="padding: 12px 14px; background: #f8fafc; border-left: 3px solid var(--asix-orange); border-radius: 4px; margin-bottom: 16px; font-size: 14px; color: var(--asix-text-muted); line-height: 1.6; display: none;">
@@ -4642,7 +4638,7 @@
               if (btnMoreOwnedHeader) btnMoreOwnedHeader.style.display = 'none';
             } else {
               const visibleOwned = owned.slice(0, 6);
-              ownedContainer.innerHTML = visibleOwned.map(m => renderModulCard(m, true)).join('');
+              ownedContainer.innerHTML = visibleOwned.map((m, idx) => renderModulCard(m, true, idx)).join('');
               const showMoreOwned = owned.length > 6;
               if (moreOwnedContainer) moreOwnedContainer.style.display = showMoreOwned ? 'block' : 'none';
               if (btnMoreOwnedHeader) btnMoreOwnedHeader.style.display = showMoreOwned ? 'inline-block' : 'none';
@@ -4661,7 +4657,7 @@
               if (btnMoreLockedHeader) btnMoreLockedHeader.style.display = 'none';
             } else {
               const visibleLocked = locked.slice(0, 6);
-              lockedContainer.innerHTML = visibleLocked.map(m => renderModulCard(m, false)).join('');
+              lockedContainer.innerHTML = visibleLocked.map((m, idx) => renderModulCard(m, false, idx)).join('');
               const showMoreLocked = locked.length > 6;
               if (moreLockedContainer) moreLockedContainer.style.display = showMoreLocked ? 'block' : 'none';
               if (btnMoreLockedHeader) btnMoreLockedHeader.style.display = showMoreLocked ? 'inline-block' : 'none';
@@ -4690,13 +4686,14 @@
       const res = await apiCall('apiModulList');
       if (!res.ok) return;
       const container = document.getElementById('grid-all-classes');
-      container.innerHTML = (res.data.moduls || []).map(m => renderModulCard(m, m.is_owned)).join('');
+      container.innerHTML = (res.data.moduls || []).map((m, idx) => renderModulCard(m, m.is_owned, idx)).join('');
     }
 
     /**
-     * Helper mengubah link Google Drive menjadi direct thumbnail image (Perbaikan 3)
+     * Helper mengubah link Google Drive menjadi direct thumbnail image (Perbaikan 3 & P5)
+     * Ukuran disesuaikan: lebar = 2x ukuran tampil (Retina display), dibulatkan, maksimal w1000.
      */
-    function formatDriveCoverUrl(url) {
+    function formatDriveCoverUrl(url, targetWidth) {
       if (!url) return '';
       url = String(url).trim();
       if (!url || !isHttpsUrl_(url)) return '';
@@ -4710,24 +4707,35 @@
           if (match) fileId = match[1];
         }
         if (fileId && /^[a-zA-Z0-9_-]+$/.test(fileId)) {
-          return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+          let sz = 'w600'; // Default optimal untuk kartu
+          const num = typeof targetWidth === 'number' ? targetWidth : parseInt(targetWidth, 10);
+          if (!isNaN(num) && num > 0) {
+            if (num <= 100) sz = 'w100';
+            else if (num <= 200) sz = 'w200';
+            else if (num <= 400) sz = 'w400';
+            else if (num <= 600) sz = 'w600';
+            else sz = 'w1000';
+          }
+          return `https://drive.google.com/thumbnail?id=${fileId}&sz=${sz}`;
         }
       }
       return url;
     }
 
-    function renderModulCard(m, isOwned) {
-      const coverSrc = formatDriveCoverUrl(m.cover_url);
+    function renderModulCard(m, isOwned, index) {
+      const coverSrc = formatDriveCoverUrl(m.cover_url, 600);
       const safeTitle = escapeAttr(m.nama_modul);
       const safeModulId = escapeAttr(m.modul_id);
       const isSuperAdmin = currentAuthUser && currentAuthUser.role === 'super_admin';
       const hasAccess = isOwned || isSuperAdmin;
       const isSegeraHadir = !hasAccess && isModulSegeraHadir(m.modul_id);
+      const isAboveFold = (typeof index === 'number' && index < 2);
+      const loadingAttr = isAboveFold ? 'loading="eager"' : 'loading="lazy"';
 
       const coverHtml = coverSrc 
         ? `
           <div class="modul-cover-wrapper" style="width: 100%; height: 160px; position: relative; overflow: hidden; background: #111;">
-            <img src="${coverSrc}" class="modul-cover" alt="${safeTitle}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover;">
+            <img src="${coverSrc}" class="modul-cover" alt="${safeTitle}" ${loadingAttr} decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover;">
             <div class="modul-cover-placeholder" style="display: none; width: 100%; height: 100%; position: absolute; inset: 0;">${safeTitle}</div>
           </div>
         `
@@ -5411,7 +5419,7 @@
         if (previewBox) previewBox.style.display = 'none';
         return;
       }
-      const formatted = formatDriveCoverUrl(val);
+      const formatted = formatDriveCoverUrl(val, 600);
       if (previewImg && previewBox) {
         previewImg.src = formatted;
         previewBox.style.display = 'block';
@@ -5454,7 +5462,7 @@
       if (dateEl) dateEl.textContent = k.tanggal || '';
       if (titleEl) titleEl.textContent = k.judul;
 
-      const coverSrc = formatDriveCoverUrl(k.cover_url);
+      const coverSrc = formatDriveCoverUrl(k.cover_url, 1000);
       if (coverSrc && coverWrap && coverImg) {
         coverImg.src = coverSrc;
         coverWrap.style.display = 'block';
@@ -5540,16 +5548,18 @@
         return;
       }
 
-      const html = items.map(k => {
-        const coverSrc = formatDriveCoverUrl(k.cover_url);
+      const html = items.map((k, idx) => {
+        const coverSrc = formatDriveCoverUrl(k.cover_url, 600);
         const safeTitle = escapeAttr(k.judul);
         const safeKontenId = escapeAttr(k.konten_id);
         const safeLink = (k.link && isHttpsUrl_(k.link)) ? escapeAttr(k.link) : '';
+        const isAboveFold = (!append && idx < 2);
+        const loadingAttr = isAboveFold ? 'loading="eager"' : 'loading="lazy"';
         return `
           <div class="asix-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" data-konten-id="${safeKontenId}" onclick="openKontenDetailModal(this.getAttribute('data-konten-id'))">
             <div style="width: 100%; height: 160px; background: #1a1a1a; position: relative; overflow: hidden;">
               ${coverSrc ? `
-                <img src="${coverSrc}" alt="${safeTitle}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover;">
+                <img src="${coverSrc}" alt="${safeTitle}" ${loadingAttr} decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover;">
                 <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background: #222; color: #888; font-size: 13px; font-weight: 500; padding: 12px; text-align: center;">${escapeHtml(k.judul)}</div>
               ` : `
                 <div style="display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; background: #222; color: #888; font-size: 13px; font-weight: 500; padding: 12px; text-align: center;">${escapeHtml(k.judul)}</div>
@@ -8480,16 +8490,18 @@
         return;
       }
 
-      tbody.innerHTML = safeItems.map(k => {
-        const coverSrc = formatDriveCoverUrl(k.cover_url);
+      tbody.innerHTML = safeItems.map((k, idx) => {
+        const coverSrc = formatDriveCoverUrl(k.cover_url, 200);
         const safeTitle = escapeAttr(k.judul);
         const isTayang = (k.status === 'terbit');
+        const isAboveFold = (idx < 5);
+        const loadingAttr = isAboveFold ? 'loading="eager"' : 'loading="lazy"';
 
         return `
           <tr>
             <td data-label="Cover">
               <div style="width: 50px; height: 50px; border-radius: 6px; overflow: hidden; background: #222; display: flex; align-items: center; justify-content: center; position: relative;">
-                ${coverSrc ? `<img src="${coverSrc}" alt="${safeTitle}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover;">` : ''}
+                ${coverSrc ? `<img src="${coverSrc}" alt="${safeTitle}" ${loadingAttr} decoding="async" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 100%; height: 100%; object-fit: cover;">` : ''}
                 <div style="${coverSrc ? 'display: none;' : 'display: flex;'} width: 100%; height: 100%; align-items: center; justify-content: center; background: #333; color: #888; font-size: 10px; font-weight: 700;">NO IMG</div>
               </div>
             </td>
@@ -8580,7 +8592,7 @@
         if (previewImg) previewImg.src = '';
         return;
       }
-      const formatted = formatDriveCoverUrl(val.trim());
+      const formatted = formatDriveCoverUrl(val.trim(), 600);
       if (previewImg && previewBox) {
         previewImg.src = formatted;
         previewBox.style.display = 'block';
