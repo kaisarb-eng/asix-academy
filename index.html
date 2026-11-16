@@ -3198,6 +3198,9 @@
     let localOwnedModulIds = [];
     let activeModulDetail = null;
     let activeCheckoutPaketId = null;
+    let currentPlayingMateri = null;
+    let smallPlayerBackupHtml = null;
+    let isLoggingOut = false;
 
     // Fallback Data Kosong (Struktur data lokal aman tanpa placeholder palsu atau akun dummy)
     const DUMMY_FALLBACK = {
@@ -3233,7 +3236,9 @@
           const res = await fetch(API_URL, fetchOpts);
           const json = await res.json();
           if (!json.ok && json.error && json.error.includes('Sesi')) {
-            logout();
+            if (!isLoggingOut) {
+              logout();
+            }
           }
           return json;
         } catch (e) {
@@ -3571,10 +3576,65 @@
 
     /**
      * =====================================================================
+     * PENGHENTI PEMUTAR MATERI (TUGAS P3)
+     * =====================================================================
+     */
+    function stopMateriPlayer_() {
+      // 1. Keluar dari native Fullscreen API jika aktif
+      try {
+        const fsElement = document.fullscreenElement || document.webkitFullscreenElement;
+        if (fsElement) {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        }
+      } catch (e) {}
+
+      // 2. Bersihkan dan tutup overlay layar penuh jika ada
+      const fsOverlay = document.getElementById('overlay-fullscreen-materi');
+      const fsBox = document.getElementById('fullscreen-frame-box');
+      if (fsBox) fsBox.innerHTML = '';
+      if (fsOverlay) fsOverlay.style.display = 'none';
+      if (typeof document !== 'undefined' && document.body) {
+        document.body.style.overflow = '';
+      }
+
+      // 3. Kosongkan pemutar utama di halaman modul-detail
+      const playerBox = document.getElementById('player-frame-box');
+      if (playerBox) {
+        playerBox.innerHTML = '';
+      }
+
+      // 4. Reset link cadangan dan kontrol pemutar
+      const backupBox = document.getElementById('player-backup-link-container');
+      if (backupBox) backupBox.innerHTML = '';
+
+      const btnFullscreen = document.getElementById('btn-materi-fullscreen');
+      if (btnFullscreen) btnFullscreen.style.display = 'none';
+
+      const btnNewTab = document.getElementById('btn-materi-newtab');
+      if (btnNewTab) btnNewTab.style.display = 'none';
+
+      const statusBadge = document.getElementById('player-status-badge');
+      if (statusBadge) statusBadge.textContent = 'Pemutar Materi';
+
+      // 5. Reset referensi materi aktif dan cadangan HTML pemutar kecil
+      currentPlayingMateri = null;
+      smallPlayerBackupHtml = null;
+    }
+
+    /**
+     * =====================================================================
      * NAVIGASI & ROUTING TAMPILAN
      * =====================================================================
      */
     function navigate(screenName) {
+      if (screenName !== 'modul-detail') {
+        stopMateriPlayer_();
+      }
+
       document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
 
       const target = document.getElementById('view-' + screenName);
@@ -3624,6 +3684,7 @@
       try {
         const res = await apiCall('apiLogin', { email, password });
         if (res.ok) {
+          isLoggingOut = false;
           localStorage.setItem('aac_token', res.data.token);
           localStorage.setItem('aac_user', JSON.stringify(res.data.user));
           currentAuthUser = res.data.user;
@@ -3793,6 +3854,7 @@
       try {
         const res = await apiCall('apiLoginGoogle', { idToken: response.credential });
         if (res.ok) {
+          isLoggingOut = false;
           localStorage.setItem('aac_token', res.data.token);
           localStorage.setItem('aac_user', JSON.stringify(res.data.user));
           currentAuthUser = res.data.user;
@@ -3825,26 +3887,87 @@
       }
     }
 
-    function logout() {
-      // Coba kirim sisa antrean log sebelum logout, lalu kosongkan
+    function logout(options = {}) {
+      if (isLoggingOut) return;
+      isLoggingOut = true;
+
+      const silent = !!(options && options.silent);
+
+      // 1. Hentikan pemutar materi segera
+      stopMateriPlayer_();
+
+      // 2. Tutup Menu Lainnya dan semua modal/overlay yang terbuka
+      document.querySelectorAll('.modal-overlay').forEach(el => {
+        el.classList.remove('active');
+      });
+      activeCheckoutPaketId = null;
+      if (typeof document !== 'undefined' && document.body) {
+        document.body.style.overflow = '';
+      }
+
+      // 3. Ambil token lama sebelum dihapus untuk notifikasi server
+      const oldToken = localStorage.getItem('aac_token') || '';
+
+      // Kosongkan antrean log di memori
       try {
-        if (typeof logQueue !== 'undefined' && logQueue.length > 0) {
-          flushLogQueue({ useKeepalive: true });
-        }
         if (typeof logQueue !== 'undefined') {
           logQueue.length = 0;
         }
       } catch (e) {}
 
-      apiCall('apiLogout').finally(() => {
-        clearHomeCache();
+      // Hapus token, data user, dan cache Home dari penyimpanan browser
+      try {
         localStorage.removeItem('aac_token');
         localStorage.removeItem('aac_user');
-        currentAuthUser = null;
-        updateUserProfileUI();
-        navigate('login');
+        clearHomeCache();
+      } catch (e) {}
+
+      currentAuthUser = null;
+      activeModulDetail = null;
+      localOwnedModulIds = [];
+
+      // Bersihkan data modul dari tampilan agar tidak tertinggal untuk user berikutnya
+      const ownedContainer = document.getElementById('grid-owned-modul');
+      if (ownedContainer) ownedContainer.innerHTML = '';
+      const lockedContainer = document.getElementById('grid-locked-modul');
+      if (lockedContainer) lockedContainer.innerHTML = '';
+
+      // 4. Perbarui UI pengguna ke status Pengunjung / Guest dan navigasi ke halaman login
+      updateUserProfileUI();
+      navigate('login');
+
+      // Reset form login password dan status error
+      const pwInput = document.getElementById('login-password');
+      if (pwInput) pwInput.value = '';
+
+      const btnSubmit = document.getElementById('btn-submit-login');
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Masuk ke Kelas';
+      }
+
+      const gErr = document.getElementById('google-login-error');
+      if (gErr) {
+        gErr.style.display = 'none';
+        gErr.textContent = '';
+      }
+
+      // 5. Tampilkan toast "Anda telah keluar." SATU kali
+      if (!silent) {
         showToast('Anda telah keluar.');
-      });
+      }
+
+      // 6. Notifikasi server untuk mencabut token (fire-and-forget di latar belakang, tanpa memblokir UI)
+      if (oldToken && API_URL && API_URL.trim() !== '') {
+        try {
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'apiLogout', token: oldToken }),
+            keepalive: true
+          }).catch(() => {});
+        } catch (e) {}
+      }
     }
 
     // ==========================================
@@ -4000,29 +4123,31 @@
         if (isHandlingStorageSync) return;
         isHandlingStorageSync = true;
 
-        showToast('Sesi login berubah di tab lain, halaman dimuat ulang...');
+        const newToken = localStorage.getItem('aac_token');
+        const newSavedUser = localStorage.getItem('aac_user');
 
-        setTimeout(() => {
+        if (!newToken || !newSavedUser) {
+          // Sesi dihapus / logout di tab lain
           isHandlingStorageSync = false;
-          const newToken = localStorage.getItem('aac_token');
-          const newSavedUser = localStorage.getItem('aac_user');
-
-          if (!newToken || !newSavedUser) {
-            // Sesi dihapus / logout di tab lain
-            currentAuthUser = null;
-            updateUserProfileUI();
-            navigate('login');
-          } else {
-            // Sesi berganti ke akun lain di tab lain
+          if (!isLoggingOut) {
+            logout({ silent: true });
+            showToast('Sesi login berakhir di tab lain.');
+          }
+        } else {
+          // Sesi berganti ke akun lain di tab lain
+          showToast('Sesi login berubah di tab lain, halaman dimuat ulang...');
+          setTimeout(() => {
+            isHandlingStorageSync = false;
             try {
+              isLoggingOut = false;
               currentAuthUser = JSON.parse(newSavedUser);
               updateUserProfileUI();
               navigate('home');
             } catch (err) {
-              navigate('login');
+              logout({ silent: true });
             }
-          }
-        }, 1000);
+          }, 1000);
+        }
       }
     });
 
@@ -4670,6 +4795,9 @@
     async function openModulDetail(modulId, initialTitle) {
       try { catatEvent('buka_modul', modulId); } catch (e) {}
 
+      // Hentikan pemutar materi modul sebelumnya secara bersih
+      stopMateriPlayer_();
+
       const currentReqId = ++openModulDetailRequestId;
       navigate('modul-detail');
 
@@ -5089,8 +5217,6 @@
     /**
      * Membuka Pemutar Materi Layar Penuh (Perbaikan 2 & P2)
      */
-    let smallPlayerBackupHtml = null;
-
     function openFullscreenMateri() {
       if (!currentPlayingMateri || !currentPlayingMateri.url) {
         showToast('Tidak ada materi aktif untuk ditampilkan layar penuh.');
@@ -9448,15 +9574,19 @@
       setupGoogleLoginInit();
 
       const savedUser = localStorage.getItem('aac_user');
-      if (savedUser) {
+      const savedToken = localStorage.getItem('aac_token');
+      if (savedUser && savedToken) {
         try {
+          isLoggingOut = false;
           currentAuthUser = JSON.parse(savedUser);
           updateUserProfileUI();
           navigate('home');
         } catch (e) {
+          isLoggingOut = true;
           navigate('login');
         }
       } else {
+        isLoggingOut = true;
         navigate('login');
       }
     });
