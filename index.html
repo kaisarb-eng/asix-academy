@@ -3915,16 +3915,41 @@
         }
       } catch (e) {}
 
-      // Hapus token, data user, dan cache Home dari penyimpanan browser
+      // Hapus token, data user, cache Home, dan sisa data sesi dari penyimpanan browser
       try {
         localStorage.removeItem('aac_token');
         localStorage.removeItem('aac_user');
         clearHomeCache();
+        localStorage.removeItem('aac_last_email');
+        localStorage.removeItem('aac_email');
+      } catch (e) {}
+
+      try {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.clear();
+        }
       } catch (e) {}
 
       currentAuthUser = null;
       activeModulDetail = null;
       localOwnedModulIds = [];
+
+      // Bersihkan cache in-memory data member & admin agar tidak tertinggal untuk user berikutnya
+      try {
+        if (typeof memberKontenCache !== 'undefined') memberKontenCache = {};
+        if (typeof memberFaqAllItems !== 'undefined') memberFaqAllItems = [];
+        if (typeof adminMemberCache !== 'undefined') adminMemberCache = [];
+        if (typeof memberModulNamesCache !== 'undefined') memberModulNamesCache = {};
+        if (typeof adminPaketCache !== 'undefined') adminPaketCache = [];
+        if (typeof adminAktivasiCache !== 'undefined') adminAktivasiCache = [];
+        if (typeof aturPaketMemberCache !== 'undefined') aturPaketMemberCache = [];
+        if (typeof adminModulCache !== 'undefined') adminModulCache = [];
+        if (typeof adminMateriCache !== 'undefined') adminMateriCache = {};
+        if (typeof adminMateriSectionsCache !== 'undefined') adminMateriSectionsCache = {};
+        if (typeof adminKontenListCache !== 'undefined') adminKontenListCache = [];
+        if (typeof adminFaqAllItems !== 'undefined') adminFaqAllItems = [];
+        if (typeof adminFaqFilteredItems !== 'undefined') adminFaqFilteredItems = [];
+      } catch (e) {}
 
       // Bersihkan data modul dari tampilan agar tidak tertinggal untuk user berikutnya
       const ownedContainer = document.getElementById('grid-owned-modul');
@@ -3936,9 +3961,23 @@
       updateUserProfileUI();
       navigate('login');
 
-      // Reset form login password dan status error
+      // Reset form login (email, password, dan status tombol/error)
+      const emailInput = document.getElementById('login-email');
+      if (emailInput) emailInput.value = '';
+
       const pwInput = document.getElementById('login-password');
-      if (pwInput) pwInput.value = '';
+      if (pwInput) {
+        pwInput.value = '';
+        pwInput.type = 'password';
+      }
+
+      // Bersihkan input sensitif di modal bila ada sisa
+      const gantiOld = document.getElementById('ganti-pw-old');
+      if (gantiOld) gantiOld.value = '';
+      const gantiNew = document.getElementById('ganti-pw-new');
+      if (gantiNew) gantiNew.value = '';
+      const adminResetPw = document.getElementById('admin-reset-pw-new');
+      if (adminResetPw) adminResetPw.value = '';
 
       const btnSubmit = document.getElementById('btn-submit-login');
       if (btnSubmit) {
