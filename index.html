@@ -1991,7 +1991,10 @@
           <div id="admin-subtab-member" class="admin-subtab-content">
             <div class="admin-subtab-header" style="display: flex; justify-content: space-between; gap: 12px; margin-bottom: 16px;">
               <input type="text" id="admin-search-member" class="form-control" style="max-width: 320px;" placeholder="Cari nama / email member..." oninput="debounceAdminMemberSearch()">
-              <button class="btn-asix-primary" onclick="openMemberModal()">+ Tambah Member</button>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-asix-secondary" onclick="loadAdminMembers(true)" style="white-space: nowrap; font-size: 13px;">🔄 Muat Ulang</button>
+                <button class="btn-asix-primary" onclick="openMemberModal()">+ Tambah Member</button>
+              </div>
             </div>
 
             <div class="asix-table-wrapper asix-card-table-wrapper">
@@ -2019,7 +2022,10 @@
           <div id="admin-subtab-paket" class="admin-subtab-content" style="display: none;">
             <div class="admin-subtab-header" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px;">
               <h3 style="margin: 0;">Daftar Paket & Centang Modul</h3>
-              <button class="btn-asix-primary" onclick="openPaketModal()">+ Tambah Paket</button>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-asix-secondary" onclick="loadAdminPaket(true)" style="white-space: nowrap; font-size: 13px;">🔄 Muat Ulang</button>
+                <button class="btn-asix-primary" onclick="openPaketModal()">+ Tambah Paket</button>
+              </div>
             </div>
             <div class="asix-table-wrapper asix-card-table-wrapper">
               <table class="asix-table asix-card-table">
@@ -2046,6 +2052,7 @@
             <div class="admin-subtab-header" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
               <h3 style="margin: 0;">Riwayat Aktivasi Paket</h3>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="btn-asix-secondary" onclick="loadAdminAktivasi(true)" style="white-space: nowrap; font-size: 13px;">🔄 Muat Ulang</button>
                 <button type="button" class="btn-asix-secondary" onclick="openAturPaketModal()">⚙️ Atur Paket Member</button>
                 <button type="button" class="btn-asix-primary" onclick="openAktivasiModal()">+ Aktivasi Paket Member</button>
               </div>
@@ -2078,6 +2085,7 @@
             <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
               <h3>Kelola Modul & Materi</h3>
               <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-asix-secondary" onclick="loadAdminModulMateri(true)" style="white-space: nowrap; font-size: 13px;">🔄 Muat Ulang</button>
                 <button class="btn-asix-secondary" id="btn-admin-add-modul" onclick="openModulModal()">+ Modul Baru</button>
                 <button class="btn-asix-primary" onclick="openMateriModal()">+ Materi Baru</button>
               </div>
@@ -2109,7 +2117,10 @@
                     <button type="button" class="btn-asix-secondary filter-konten-chip" data-panel="others" onclick="setAdminKontenFilter('others', this)" style="font-size: 12px; padding: 5px 12px;">Others</button>
                   </div>
                 </div>
-                <button type="button" class="btn-asix-primary" onclick="openKontenModal()" style="white-space: nowrap;">+ Tambah Konten</button>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="btn-asix-secondary" onclick="loadAdminKonten(true)" style="white-space: nowrap; font-size: 13px;">🔄 Muat Ulang</button>
+                  <button type="button" class="btn-asix-primary" onclick="openKontenModal()" style="white-space: nowrap;">+ Tambah Konten</button>
+                </div>
               </div>
 
               <!-- Tabel / Kartu Konten -->
@@ -2153,7 +2164,10 @@
                     <option value="__UMUM__">Khusus FAQ Umum</option>
                   </select>
                 </div>
-                <button type="button" class="btn-asix-primary" onclick="openFaqModal()" style="white-space: nowrap;">+ Tambah FAQ</button>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="btn-asix-secondary" onclick="loadAdminFaq(true)" style="white-space: nowrap; font-size: 13px;">🔄 Muat Ulang</button>
+                  <button type="button" class="btn-asix-primary" onclick="openFaqModal()" style="white-space: nowrap;">+ Tambah FAQ</button>
+                </div>
               </div>
 
               <!-- Tabel / Kartu FAQ -->
@@ -2190,7 +2204,10 @@
                 <div style="flex: 1; min-width: 260px;">
                   <input type="text" id="admin-testimoni-search" class="form-control" style="max-width: 320px;" placeholder="Cari nama / asal / isi..." oninput="debounceAdminTestimoniSearch()">
                 </div>
-                <button type="button" class="btn-asix-primary" onclick="openTestimoniModal()" style="white-space: nowrap;">+ Tambah Testimoni</button>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="btn-asix-secondary" onclick="loadAdminTestimoni(true)" style="white-space: nowrap; font-size: 13px;">🔄 Muat Ulang</button>
+                  <button type="button" class="btn-asix-primary" onclick="openTestimoniModal()" style="white-space: nowrap;">+ Tambah Testimoni</button>
+                </div>
               </div>
 
               <!-- Tabel / Kartu Testimoni -->
@@ -3215,6 +3232,173 @@
     };
 
     /**
+     * =====================================================================
+     * P6b: IN-MEMORY API CACHE & REQUEST DEDUPLICATION (TTL = 3 Menit)
+     * =====================================================================
+     */
+    const CACHE_TTL_MS = 180000; // 3 menit (180.000 ms)
+
+    // Penyimpanan cache di memori per action + parameter: key -> { timestamp, data }
+    const memoryApiCache_ = new Map();
+
+    // Deduplikasi request in-flight: key -> Promise
+    const inFlightRequests_ = new Map();
+
+    // Daftar aksi yang TIDAK PERNAH boleh di-cache
+    const NO_CACHE_ACTIONS = new Set([
+      'apiLogin',
+      'apiLoginGoogle',
+      'apiLogout',
+      'apiLogAktivitas',
+      'apiDashboardLog'
+    ]);
+
+    function getApiCacheKey_(action, params) {
+      if (!params || typeof params !== 'object') return action;
+      const keys = Object.keys(params).sort();
+      const parts = keys.map(k => `${k}:${JSON.stringify(params[k])}`);
+      return `${action}?${parts.join('&')}`;
+    }
+
+    function hasFreshApiCache_(action, params = {}) {
+      if (NO_CACHE_ACTIONS.has(action)) return false;
+      const key = getApiCacheKey_(action, params);
+      const entry = memoryApiCache_.get(key);
+      if (!entry) return false;
+      const age = Date.now() - entry.timestamp;
+      return age >= 0 && age < CACHE_TTL_MS;
+    }
+
+    function getApiCacheEntry_(action, params = {}) {
+      if (NO_CACHE_ACTIONS.has(action)) return null;
+      const key = getApiCacheKey_(action, params);
+      const entry = memoryApiCache_.get(key);
+      if (!entry) return null;
+      const age = Date.now() - entry.timestamp;
+      if (age < 0 || age >= CACHE_TTL_MS) {
+        memoryApiCache_.delete(key);
+        return null;
+      }
+      try {
+        return JSON.parse(JSON.stringify(entry.data));
+      } catch (e) {
+        return entry.data;
+      }
+    }
+
+    function setApiCacheEntry_(action, params, data) {
+      if (NO_CACHE_ACTIONS.has(action)) return;
+      if (!data || !data.ok) return; // Hasil error JANGAN disimpan di cache
+      const key = getApiCacheKey_(action, params);
+      try {
+        memoryApiCache_.set(key, {
+          timestamp: Date.now(),
+          data: JSON.parse(JSON.stringify(data))
+        });
+      } catch (e) {
+        memoryApiCache_.set(key, {
+          timestamp: Date.now(),
+          data: data
+        });
+      }
+    }
+
+    function clearApiCacheByAction_(actionPrefix) {
+      for (const key of Array.from(memoryApiCache_.keys())) {
+        if (key.startsWith(actionPrefix)) {
+          memoryApiCache_.delete(key);
+        }
+      }
+    }
+
+    function clearAllMemoryApiCache_() {
+      memoryApiCache_.clear();
+      inFlightRequests_.clear();
+    }
+
+    function invalidateCacheForAction_(action, params) {
+      if (!action || typeof action !== 'string') return;
+      if (action.includes('Member')) {
+        clearApiCacheByAction_('apiAdminMemberList');
+        clearApiCacheByAction_('apiDashboard');
+        window.adminMemberCacheAll = null;
+        if (typeof adminMemberCache !== 'undefined') adminMemberCache = [];
+      }
+      if (action.includes('Paket')) {
+        clearApiCacheByAction_('apiAdminPaketList');
+        clearApiCacheByAction_('apiAdminMemberList');
+        clearApiCacheByAction_('apiDashboard');
+        if (typeof adminPaketCache !== 'undefined') adminPaketCache = [];
+      }
+      if (action.includes('Akses')) {
+        clearApiCacheByAction_('apiAdminAksesList');
+        clearApiCacheByAction_('apiAdminMemberList');
+        clearApiCacheByAction_('apiDashboard');
+        if (typeof adminAktivasiCache !== 'undefined') adminAktivasiCache = [];
+      }
+      if (action.includes('Modul') || action.includes('Materi')) {
+        clearApiCacheByAction_('apiModulList');
+        clearApiCacheByAction_('apiModulDetail');
+        clearApiCacheByAction_('apiDashboard');
+        clearApiCacheByAction_('apiAdminMemberList');
+        window.adminModulCache = null;
+        if (typeof adminModulCache !== 'undefined') adminModulCache = [];
+        activeModulDetail = null;
+      }
+      if (action.includes('Konten')) {
+        clearApiCacheByAction_('apiKontenList');
+        clearApiCacheByAction_('apiDashboard');
+        if (typeof adminKontenListCache !== 'undefined') adminKontenListCache = [];
+        if (typeof adminTestimoniListCache !== 'undefined') adminTestimoniListCache = [];
+        if (typeof memberKontenCache !== 'undefined') memberKontenCache = {};
+        clearHomeCache();
+      }
+      if (action.includes('Faq')) {
+        clearApiCacheByAction_('apiFaqList');
+        clearApiCacheByAction_('apiModulList');
+        if (typeof adminFaqAllItems !== 'undefined') adminFaqAllItems = [];
+        if (typeof memberFaqAllItems !== 'undefined') memberFaqAllItems = [];
+        clearHomeCache('faq');
+      }
+    }
+
+    async function cachedApiCall_(action, params = {}, options = {}) {
+      const force = options && options.force === true;
+
+      if (NO_CACHE_ACTIONS.has(action)) {
+        return apiCall(action, params, options);
+      }
+
+      const cacheKey = getApiCacheKey_(action, params);
+
+      if (!force) {
+        const cached = getApiCacheEntry_(action, params);
+        if (cached !== null) {
+          return cached;
+        }
+      }
+
+      if (inFlightRequests_.has(cacheKey)) {
+        return inFlightRequests_.get(cacheKey);
+      }
+
+      const reqPromise = (async () => {
+        try {
+          const res = await apiCall(action, params, options);
+          if (res && res.ok) {
+            setApiCacheEntry_(action, params, res);
+          }
+          return res;
+        } finally {
+          inFlightRequests_.delete(cacheKey);
+        }
+      })();
+
+      inFlightRequests_.set(cacheKey, reqPromise);
+      return reqPromise;
+    }
+
+    /**
      * Helper API Fetcher dengan aturan keamanan ketat:
      * Data dummy fallback HANYA dipakai jika API_URL kosong.
      * Jika API_URL terisi lalu fetch gagal atau server membalas error, tampilkan pesan error yang jelas.
@@ -3239,6 +3423,9 @@
             if (!isLoggingOut) {
               logout();
             }
+          }
+          if (json && json.ok && action.startsWith('apiAdmin') && !action.includes('List')) {
+            invalidateCacheForAction_(action, params);
           }
           return json;
         } catch (e) {
@@ -3684,6 +3871,7 @@
       try {
         const res = await apiCall('apiLogin', { email, password });
         if (res.ok) {
+          clearAllMemoryApiCache_();
           isLoggingOut = false;
           localStorage.setItem('aac_token', res.data.token);
           localStorage.setItem('aac_user', JSON.stringify(res.data.user));
@@ -3854,6 +4042,7 @@
       try {
         const res = await apiCall('apiLoginGoogle', { idToken: response.credential });
         if (res.ok) {
+          clearAllMemoryApiCache_();
           isLoggingOut = false;
           localStorage.setItem('aac_token', res.data.token);
           localStorage.setItem('aac_user', JSON.stringify(res.data.user));
@@ -3933,6 +4122,9 @@
       currentAuthUser = null;
       activeModulDetail = null;
       localOwnedModulIds = [];
+
+      // Kosongkan seluruh cache memori panel & deduplikasi in-flight (P6b)
+      clearAllMemoryApiCache_();
 
       // Bersihkan cache in-memory data member & admin agar tidak tertinggal untuk user berikutnya
       try {
@@ -4394,16 +4586,72 @@
     /**
      * Memuat 3 konten Asix Library terbaru untuk Home
      */
-    async function loadHomeLibrary() {
+    function isHomeCacheFresh_() {
+      try {
+        const raw = localStorage.getItem(HOME_CACHE_KEY);
+        if (!raw) return false;
+        const cacheObj = JSON.parse(raw);
+        if (!cacheObj || typeof cacheObj !== 'object') return false;
+
+        const now = Date.now();
+        let hasValidEntry = false;
+        for (const k of ['today', 'faq', 'testimoni']) {
+          const entry = cacheObj[k];
+          if (entry && entry.timestamp) {
+            const age = now - entry.timestamp;
+            if (age < 0 || age >= CACHE_TTL_MS) {
+              return false;
+            }
+            hasValidEntry = true;
+          }
+        }
+        return hasValidEntry && hasFreshApiCache_('apiDashboard');
+      } catch (e) {
+        return false;
+      }
+    }
+
+    /**
+     * Memuat 3 konten Asix Library terbaru untuk Home
+     */
+    async function loadHomeLibrary(forceRefresh = true) {
       const container = document.getElementById('list-home-library');
       if (!container) return;
 
-      container.innerHTML = '<p style="font-size: 13px; color: var(--asix-text-muted); padding: 12px 0;">Memuat Asix Library...</p>';
+      if (!forceRefresh) {
+        const cached = getApiCacheEntry_('apiKontenList', { panel: 'library', limit: 3 });
+        if (cached && cached.ok && Array.isArray(cached.data?.items)) {
+          let items = cached.data.items;
+          if (!currentAuthUser || currentAuthUser.role !== 'super_admin') {
+            items = items.filter(k => k.status === 'terbit');
+          }
+          const top3 = items.slice(0, 3);
+          if (top3.length > 0) {
+            container.innerHTML = top3.map(item => `
+              <div class="today-item-card" style="cursor: pointer;" onclick="navigate('library')">
+                <div style="flex: 1;">
+                  <span class="badge-preview" style="font-size: 10px; margin-bottom: 6px; display: inline-block;">${escapeHtml(item.kategori || 'Library')}</span>
+                  <h4 style="font-size: 15px; margin-bottom: 4px;">${escapeHtml(item.judul || '')}</h4>
+                  <p style="font-size: 13px; color: var(--asix-text-muted); margin: 0;">${escapeHtml(item.ringkasan || '')}</p>
+                </div>
+                <span style="font-size: 11px; color: var(--asix-text-muted); align-self: flex-start; white-space: nowrap;">${escapeHtml(item.tanggal || '')}</span>
+              </div>
+            `).join('');
+            return;
+          }
+        }
+      }
+
+      if (!container.children || !container.children.length) {
+        container.innerHTML = '<p style="font-size: 13px; color: var(--asix-text-muted); padding: 12px 0;">Memuat Asix Library...</p>';
+      }
 
       try {
-        const res = await apiCall('apiKontenList', { panel: 'library', limit: 3 });
+        const res = await cachedApiCall_('apiKontenList', { panel: 'library', limit: 3 }, { force: forceRefresh });
         if (!res || !res.ok || !res.data || !Array.isArray(res.data.items)) {
-          container.innerHTML = '<p style="font-size: 13px; color: var(--asix-danger); padding: 12px 0;">Gagal memuat Asix Library.</p>';
+          if (!container.children || !container.children.length) {
+            container.innerHTML = '<p style="font-size: 13px; color: var(--asix-danger); padding: 12px 0;">Gagal memuat Asix Library.</p>';
+          }
           return;
         }
 
@@ -4430,7 +4678,9 @@
         `).join('');
       } catch (err) {
         console.warn('[Home] Gagal memuat Asix Library:', err);
-        container.innerHTML = '<p style="font-size: 13px; color: var(--asix-danger); padding: 12px 0;">Gagal memuat Asix Library.</p>';
+        if (!container.children || !container.children.length) {
+          container.innerHTML = '<p style="font-size: 13px; color: var(--asix-danger); padding: 12px 0;">Gagal memuat Asix Library.</p>';
+        }
       }
     }
 
@@ -4470,7 +4720,7 @@
     /**
      * Memuat 5 FAQ umum teratas untuk Home (Accordion)
      */
-    async function loadHomeFaq() {
+    async function loadHomeFaq(forceRefresh = true) {
       const container = document.getElementById('list-home-faq');
       if (!container) return;
 
@@ -4484,8 +4734,12 @@
         container.innerHTML = '<p style="font-size: 13px; color: var(--asix-text-muted); padding: 12px 0;">Memuat FAQ...</p>';
       }
 
+      if (!forceRefresh && hasRenderedCache) {
+        return;
+      }
+
       try {
-        const items = await fetchSingleFaqSafe('');
+        const items = await fetchSingleFaqSafe('', forceRefresh);
         if (!Array.isArray(items)) {
           if (!hasRenderedCache) {
             container.innerHTML = '<p style="font-size: 13px; color: var(--asix-danger); padding: 12px 0;">Gagal memuat FAQ umum.</p>';
@@ -4566,7 +4820,7 @@
     /**
      * Memuat testimoni member berstatus 'terbit' untuk bagian "Kata Mereka" di Home
      */
-    async function loadHomeTestimoni() {
+    async function loadHomeTestimoni(forceRefresh = true) {
       const section = document.getElementById('home-testimoni-section');
       const container = document.getElementById('home-testimoni-container');
       if (!section || !container) return;
@@ -4579,9 +4833,13 @@
         hasRenderedCache = true;
       }
 
+      if (!forceRefresh && hasRenderedCache) {
+        return;
+      }
+
       try {
-        const res = await apiCall('apiKontenList', { panel: 'testimoni', limit: 10 });
-        if (!res.ok || !res.data || !Array.isArray(res.data.items)) {
+        const res = await cachedApiCall_('apiKontenList', { panel: 'testimoni', limit: 10 }, { force: forceRefresh });
+        if (!res || !res.ok || !res.data || !Array.isArray(res.data.items)) {
           if (!hasRenderedCache) {
             section.style.display = 'none';
           }
@@ -4602,8 +4860,64 @@
       }
     }
 
+    function renderDashboardData_(data) {
+      if (!data) return;
+      const owned = data.modul_dimiliki || [];
+      const locked = data.modul_terkunci || [];
+
+      const badgeCount = document.getElementById('badge-count-owned');
+      if (badgeCount) badgeCount.textContent = owned.length + ' Modul Aktif';
+
+      // Render Modul Dimiliki (Maksimal 6)
+      const ownedContainer = document.getElementById('grid-owned-modul');
+      const moreOwnedContainer = document.getElementById('more-owned-container');
+      const btnMoreOwnedHeader = document.getElementById('btn-more-owned-header');
+
+      if (ownedContainer) {
+        if (owned.length === 0) {
+          ownedContainer.innerHTML = '<p style="font-size: 13px; color: var(--asix-text-muted);">Belum ada modul aktif. Beli paket di bawah untuk mulai belajar.</p>';
+          if (moreOwnedContainer) moreOwnedContainer.style.display = 'none';
+          if (btnMoreOwnedHeader) btnMoreOwnedHeader.style.display = 'none';
+        } else {
+          const visibleOwned = owned.slice(0, 6);
+          ownedContainer.innerHTML = visibleOwned.map((m, idx) => renderModulCard(m, true, idx)).join('');
+          const showMoreOwned = owned.length > 6;
+          if (moreOwnedContainer) moreOwnedContainer.style.display = showMoreOwned ? 'block' : 'none';
+          if (btnMoreOwnedHeader) btnMoreOwnedHeader.style.display = showMoreOwned ? 'inline-block' : 'none';
+        }
+      }
+
+      // Render Modul Terkunci (Maksimal 6)
+      const lockedContainer = document.getElementById('grid-locked-modul');
+      const moreLockedContainer = document.getElementById('more-locked-container');
+      const btnMoreLockedHeader = document.getElementById('btn-more-locked-header');
+
+      if (lockedContainer) {
+        if (locked.length === 0) {
+          lockedContainer.innerHTML = '<p style="font-size: 13px; color: var(--asix-text-muted);">Luar biasa! Anda telah memiliki seluruh modul.</p>';
+          if (moreLockedContainer) moreLockedContainer.style.display = 'none';
+          if (btnMoreLockedHeader) btnMoreLockedHeader.style.display = 'none';
+        } else {
+          const visibleLocked = locked.slice(0, 6);
+          lockedContainer.innerHTML = visibleLocked.map((m, idx) => renderModulCard(m, false, idx)).join('');
+          const showMoreLocked = locked.length > 6;
+          if (moreLockedContainer) moreLockedContainer.style.display = showMoreLocked ? 'block' : 'none';
+          if (btnMoreLockedHeader) btnMoreLockedHeader.style.display = showMoreLocked ? 'inline-block' : 'none';
+        }
+      }
+
+      // Render Today Terbaru (Maksimal 3)
+      const todayList = (data.today_terbaru || []).map(t => ({
+        ...t,
+        status: t.status || 'terbit'
+      }));
+      loadHomeToday(todayList);
+    }
+
     async function loadDashboard() {
       renderHomeMarquee();
+
+      const homeCacheFresh = isHomeCacheFresh_();
 
       // Render awal dari cache jika ada agar Home instan tanpa jeda
       const cachedToday = getHomeCache('today');
@@ -4611,9 +4925,22 @@
         renderHomeTodayItems(cachedToday);
       }
 
+      if (homeCacheFresh) {
+        // Cache Home dan Dashboard masih segar (< CACHE_TTL_MS): render langsung tanpa tembak jaringan
+        const dashCached = getApiCacheEntry_('apiDashboard');
+        if (dashCached && dashCached.ok) {
+          renderDashboardData_(dashCached.data);
+          loadHomeLibrary(false);
+          loadHomeFaq(false);
+          loadHomeTestimoni(false);
+          return;
+        }
+      }
+
+      // Refresh di latar jika belum ada atau umurnya >= CACHE_TTL_MS
       const dashPromise = (async () => {
         try {
-          const res = await apiCall('apiDashboard');
+          const res = await cachedApiCall_('apiDashboard', {}, { force: true });
           if (!res.ok) {
             const ownedEl = document.getElementById('grid-owned-modul');
             const lockedEl = document.getElementById('grid-locked-modul');
@@ -4623,74 +4950,30 @@
             return;
           }
 
-          const data = res.data;
-          const owned = data.modul_dimiliki || [];
-          const locked = data.modul_terkunci || [];
-
-          const badgeCount = document.getElementById('badge-count-owned');
-          if (badgeCount) badgeCount.textContent = owned.length + ' Modul Aktif';
-
-          // Render Modul Dimiliki (Maksimal 6)
-          const ownedContainer = document.getElementById('grid-owned-modul');
-          const moreOwnedContainer = document.getElementById('more-owned-container');
-          const btnMoreOwnedHeader = document.getElementById('btn-more-owned-header');
-
-          if (ownedContainer) {
-            if (owned.length === 0) {
-              ownedContainer.innerHTML = '<p style="font-size: 13px; color: var(--asix-text-muted);">Belum ada modul aktif. Beli paket di bawah untuk mulai belajar.</p>';
-              if (moreOwnedContainer) moreOwnedContainer.style.display = 'none';
-              if (btnMoreOwnedHeader) btnMoreOwnedHeader.style.display = 'none';
-            } else {
-              const visibleOwned = owned.slice(0, 6);
-              ownedContainer.innerHTML = visibleOwned.map((m, idx) => renderModulCard(m, true, idx)).join('');
-              const showMoreOwned = owned.length > 6;
-              if (moreOwnedContainer) moreOwnedContainer.style.display = showMoreOwned ? 'block' : 'none';
-              if (btnMoreOwnedHeader) btnMoreOwnedHeader.style.display = showMoreOwned ? 'inline-block' : 'none';
-            }
-          }
-
-          // Render Modul Terkunci (Maksimal 6)
-          const lockedContainer = document.getElementById('grid-locked-modul');
-          const moreLockedContainer = document.getElementById('more-locked-container');
-          const btnMoreLockedHeader = document.getElementById('btn-more-locked-header');
-
-          if (lockedContainer) {
-            if (locked.length === 0) {
-              lockedContainer.innerHTML = '<p style="font-size: 13px; color: var(--asix-text-muted);">Luar biasa! Anda telah memiliki seluruh modul.</p>';
-              if (moreLockedContainer) moreLockedContainer.style.display = 'none';
-              if (btnMoreLockedHeader) btnMoreLockedHeader.style.display = 'none';
-            } else {
-              const visibleLocked = locked.slice(0, 6);
-              lockedContainer.innerHTML = visibleLocked.map((m, idx) => renderModulCard(m, false, idx)).join('');
-              const showMoreLocked = locked.length > 6;
-              if (moreLockedContainer) moreLockedContainer.style.display = showMoreLocked ? 'block' : 'none';
-              if (btnMoreLockedHeader) btnMoreLockedHeader.style.display = showMoreLocked ? 'inline-block' : 'none';
-            }
-          }
-
-          // Render Today Terbaru (Maksimal 3)
-          const todayList = (data.today_terbaru || []).map(t => ({
-            ...t,
-            status: t.status || 'terbit'
-          }));
-          loadHomeToday(todayList);
+          renderDashboardData_(res.data);
         } catch (e) {
           console.warn('[Home] Gagal memuat dashboard:', e);
         }
       })();
 
-      const libPromise = loadHomeLibrary();
-      const faqPromise = loadHomeFaq();
-      const testimoniPromise = loadHomeTestimoni();
+      const libPromise = loadHomeLibrary(true);
+      const faqPromise = loadHomeFaq(true);
+      const testimoniPromise = loadHomeTestimoni(true);
 
       await Promise.allSettled([dashPromise, libPromise, faqPromise, testimoniPromise]);
     }
 
     async function loadClassCatalog() {
-      const res = await apiCall('apiModulList');
-      if (!res.ok) return;
+      const isCached = hasFreshApiCache_('apiModulList');
       const container = document.getElementById('grid-all-classes');
-      container.innerHTML = (res.data.moduls || []).map((m, idx) => renderModulCard(m, m.is_owned, idx)).join('');
+      if (!isCached && container && (!container.children || !container.children.length)) {
+        container.innerHTML = '<p style="font-size: 13px; color: var(--asix-text-muted); padding: 12px 0;">Memuat kelas...</p>';
+      }
+      const res = await cachedApiCall_('apiModulList');
+      if (!res.ok) return;
+      if (container) {
+        container.innerHTML = (res.data.moduls || []).map((m, idx) => renderModulCard(m, m.is_owned, idx)).join('');
+      }
     }
 
     /**
@@ -4884,31 +5167,35 @@
         }
       }
 
-      // Tampilkan keadaan memuat segera tanpa menampilkan konten modul sebelumnya
-      if (titleEl) titleEl.textContent = initialTitle || 'Memuat modul...';
-      if (badgeEl) badgeEl.innerHTML = '<span class="badge-preview" style="font-size: 11px;">Memuat...</span>';
+      const isCached = hasFreshApiCache_('apiModulDetail', { modul_id: modulId });
 
-      if (playerBox) {
-        playerBox.innerHTML = `
-          <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
-            <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">⏳ Memuat Modul...</p>
-            <p style="font-size: 13px; color: #9CA3AF; margin: 0; max-width: 90%;">Sedang mengambil data modul dan materi.</p>
-          </div>
-        `;
+      // Tampilkan keadaan memuat jika belum ada cache di memori
+      if (!isCached) {
+        if (titleEl) titleEl.textContent = initialTitle || 'Memuat modul...';
+        if (badgeEl) badgeEl.innerHTML = '<span class="badge-preview" style="font-size: 11px;">Memuat...</span>';
+
+        if (playerBox) {
+          playerBox.innerHTML = `
+            <div style="position: absolute; inset: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #111; color: white; padding: 20px; text-align: center; box-sizing: border-box; line-height: 1.5;">
+              <p style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">⏳ Memuat Modul...</p>
+              <p style="font-size: 13px; color: #9CA3AF; margin: 0; max-width: 90%;">Sedang mengambil data modul dan materi.</p>
+            </div>
+          `;
+        }
+
+        if (matTitle) matTitle.textContent = initialTitle ? `Modul: ${initialTitle}` : 'Memuat Materi...';
+        if (matDesc) matDesc.textContent = 'Mohon tunggu sebentar, sedang mengambil kurikulum materi...';
+
+        if (accordion) {
+          accordion.innerHTML = `
+            <div style="text-align: center; padding: 32px 16px; color: var(--asix-text-muted); font-size: 13px;">
+              ⏳ Sedang memuat kurikulum materi...
+            </div>
+          `;
+        }
       }
 
-      if (matTitle) matTitle.textContent = initialTitle ? `Modul: ${initialTitle}` : 'Memuat Materi...';
-      if (matDesc) matDesc.textContent = 'Mohon tunggu sebentar, sedang mengambil kurikulum materi...';
-
-      if (accordion) {
-        accordion.innerHTML = `
-          <div style="text-align: center; padding: 32px 16px; color: var(--asix-text-muted); font-size: 13px;">
-            ⏳ Sedang memuat kurikulum materi...
-          </div>
-        `;
-      }
-
-      const res = await apiCall('apiModulDetail', { modul_id: modulId });
+      const res = await cachedApiCall_('apiModulDetail', { modul_id: modulId });
 
       // Cegah balapan (race condition): jika ada klik modul lain yang lebih baru, abaikan hasil ini
       if (currentReqId !== openModulDetailRequestId) {
@@ -5507,16 +5794,20 @@
       const container = document.getElementById(panel === 'today' ? 'list-today-items' : `grid-${panel}-items`);
       if (!container) return;
 
-      if (!append) {
-        container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--asix-text-muted);">Memuat konten...</div>';
-      }
-
-      const res = await apiCall('apiKontenList', {
+      const queryParams = {
         panel: panel,
         limit: state.limit,
         offset: state.offset,
         cari: state.cari
-      });
+      };
+
+      const isCached = !append && hasFreshApiCache_('apiKontenList', queryParams);
+
+      if (!append && !isCached) {
+        container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--asix-text-muted);">Memuat konten...</div>';
+      }
+
+      const res = await cachedApiCall_('apiKontenList', queryParams);
 
       if (!res.ok) {
         if (!append) {
@@ -5624,16 +5915,16 @@
     let memberFaqSearchTimeout = null;
     let memberFaqLoadingTimer = null;
 
-    async function getModulsCacheSafe() {
-      if (window.adminModulCache && Array.isArray(window.adminModulCache) && window.adminModulCache.length > 0) {
+    async function getModulsCacheSafe(forceRefresh = false) {
+      if (!forceRefresh && window.adminModulCache && Array.isArray(window.adminModulCache) && window.adminModulCache.length > 0) {
         return window.adminModulCache;
       }
-      if (typeof adminModulCache !== 'undefined' && Array.isArray(adminModulCache) && adminModulCache.length > 0) {
+      if (!forceRefresh && typeof adminModulCache !== 'undefined' && Array.isArray(adminModulCache) && adminModulCache.length > 0) {
         window.adminModulCache = adminModulCache;
         return adminModulCache;
       }
       try {
-        const mRes = await apiCall('apiModulList');
+        const mRes = await cachedApiCall_('apiModulList', {}, { force: forceRefresh });
         if (mRes && mRes.ok && mRes.data && Array.isArray(mRes.data.moduls)) {
           window.adminModulCache = mRes.data.moduls;
           if (typeof adminModulCache !== 'undefined') adminModulCache = mRes.data.moduls;
@@ -5645,9 +5936,9 @@
       return [];
     }
 
-    async function fetchSingleFaqSafe(modulId) {
+    async function fetchSingleFaqSafe(modulId, forceRefresh = false) {
       try {
-        const res = await apiCall('apiFaqList', { modul_id: modulId || '' });
+        const res = await cachedApiCall_('apiFaqList', { modul_id: modulId || '' }, { force: forceRefresh });
         if (res && res.ok && res.data && Array.isArray(res.data.items)) {
           return res.data.items;
         }
@@ -5664,62 +5955,124 @@
       const listContainer = document.getElementById('list-faq-accordion');
       if (!listContainer) return;
 
+      const isSemua = !memberFaqModulFilter;
+      const isUmum = memberFaqModulFilter === '__UMUM__';
+
+      let hasCached = false;
+      if (isUmum) {
+        hasCached = hasFreshApiCache_('apiFaqList', { modul_id: '' });
+      } else if (memberFaqModulFilter) {
+        hasCached = hasFreshApiCache_('apiFaqList', { modul_id: memberFaqModulFilter });
+      } else {
+        hasCached = hasFreshApiCache_('apiFaqList', { modul_id: '' });
+      }
+
       if (memberFaqLoadingTimer) {
         clearTimeout(memberFaqLoadingTimer);
         memberFaqLoadingTimer = null;
       }
 
-      listContainer.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--asix-text-muted);">Memuat FAQ...</div>';
+      if (!hasCached && (!memberFaqAllItems || memberFaqAllItems.length === 0)) {
+        listContainer.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--asix-text-muted);">Memuat FAQ...</div>';
 
-      // Pasang safety timeout 8 detik agar tampilan tidak macet
-      memberFaqLoadingTimer = setTimeout(() => {
-        if (listContainer && listContainer.innerHTML.includes('Memuat FAQ...')) {
-          listContainer.innerHTML = `
-            <div class="asix-card" style="padding: 24px; text-align: center; border-color: var(--asix-danger);">
-              <p style="font-size: 14px; color: var(--asix-danger); margin-bottom: 8px;">Koneksi ke server membutuhkan waktu terlalu lama.</p>
-              <button type="button" class="btn-asix-secondary" onclick="loadFaq()" style="font-size: 12px; padding: 6px 14px;">Coba Lagi</button>
-            </div>
-          `;
-        }
-      }, 8000);
+        // Pasang safety timeout 8 detik agar tampilan tidak macet
+        memberFaqLoadingTimer = setTimeout(() => {
+          if (listContainer && listContainer.innerHTML.includes('Memuat FAQ...')) {
+            listContainer.innerHTML = `
+              <div class="asix-card" style="padding: 24px; text-align: center; border-color: var(--asix-danger);">
+                <p style="font-size: 14px; color: var(--asix-danger); margin-bottom: 8px;">Koneksi ke server membutuhkan waktu terlalu lama.</p>
+                <button type="button" class="btn-asix-secondary" onclick="loadFaq()" style="font-size: 12px; padding: 6px 14px;">Coba Lagi</button>
+              </div>
+            `;
+          }
+        }, 8000);
+      }
+
+      // Modul chips: Pakai cache modul yang ada tanpa memblokir FAQ
+      if (window.adminModulCache && window.adminModulCache.length > 0) {
+        renderMemberFaqFilterChips();
+      } else {
+        cachedApiCall_('apiModulList').then(mRes => {
+          if (mRes && mRes.ok && mRes.data && Array.isArray(mRes.data.moduls)) {
+            window.adminModulCache = mRes.data.moduls;
+            if (typeof adminModulCache !== 'undefined') adminModulCache = mRes.data.moduls;
+            renderMemberFaqFilterChips();
+          }
+        }).catch(() => {});
+      }
 
       try {
-        // Pastikan modul terisi sebelum render filter chips
-        const moduls = await getModulsCacheSafe();
-        renderMemberFaqFilterChips();
+        if (isUmum) {
+          const res = await cachedApiCall_('apiFaqList', { modul_id: '' });
+          if (memberFaqLoadingTimer) { clearTimeout(memberFaqLoadingTimer); memberFaqLoadingTimer = null; }
+          const items = (res.data?.items || []).filter(f => f.status === 'aktif');
+          items.sort((a, b) => (parseInt(a.urutan, 10) || 0) - (parseInt(b.urutan, 10) || 0));
+          memberFaqAllItems = items;
+          renderMemberFaqAccordion();
+          return;
+        }
 
-        let items = [];
-        if (memberFaqModulFilter === '__UMUM__') {
-          items = await fetchSingleFaqSafe('');
-        } else if (memberFaqModulFilter) {
-          items = await fetchSingleFaqSafe(memberFaqModulFilter);
-        } else {
-          // "Semua FAQ": ambil FAQ umum + tiap modul secara aman
-          const fetchPromises = [
-            fetchSingleFaqSafe(''),
-            ...moduls.map(m => fetchSingleFaqSafe(m.modul_id))
-          ];
-          const results = await Promise.all(fetchPromises);
-          const combined = [];
-          const seen = new Set();
-          results.flat().forEach(it => {
-            if (it && it.faq_id && !seen.has(it.faq_id)) {
-              seen.add(it.faq_id);
-              combined.push(it);
+        if (memberFaqModulFilter) {
+          const res = await cachedApiCall_('apiFaqList', { modul_id: memberFaqModulFilter });
+          if (memberFaqLoadingTimer) { clearTimeout(memberFaqLoadingTimer); memberFaqLoadingTimer = null; }
+          const items = (res.data?.items || []).filter(f => f.status === 'aktif');
+          items.sort((a, b) => (parseInt(a.urutan, 10) || 0) - (parseInt(b.urutan, 10) || 0));
+          memberFaqAllItems = items;
+          renderMemberFaqAccordion();
+          return;
+        }
+
+        // "Semua FAQ": Tampilkan bertahap (Umum dulu, lalu modul ditambahkan saat datang)
+        const combinedMap = new Map();
+
+        function updateAndRenderMemberFaq_() {
+          if (memberFaqLoadingTimer) {
+            clearTimeout(memberFaqLoadingTimer);
+            memberFaqLoadingTimer = null;
+          }
+          const activeItems = Array.from(combinedMap.values()).filter(f => f.status === 'aktif');
+          activeItems.sort((a, b) => (parseInt(a.urutan, 10) || 0) - (parseInt(b.urutan, 10) || 0));
+          memberFaqAllItems = activeItems;
+          renderMemberFaqAccordion();
+        }
+
+        const umumPromise = cachedApiCall_('apiFaqList', { modul_id: '' })
+          .then(res => {
+            if (res && res.ok && Array.isArray(res.data?.items)) {
+              res.data.items.forEach(it => {
+                if (it && it.faq_id) combinedMap.set(it.faq_id, it);
+              });
+              updateAndRenderMemberFaq_();
             }
           });
-          items = combined;
-        }
 
-        if (memberFaqLoadingTimer) {
-          clearTimeout(memberFaqLoadingTimer);
-          memberFaqLoadingTimer = null;
-        }
+        const modulsPromise = (window.adminModulCache && window.adminModulCache.length > 0)
+          ? Promise.resolve(window.adminModulCache)
+          : cachedApiCall_('apiModulList').then(r => (r && r.ok && r.data?.moduls) ? r.data.moduls : []);
 
-        const activeItems = (items || []).filter(f => f.status === 'aktif');
-        activeItems.sort((a, b) => (parseInt(a.urutan, 10) || 0) - (parseInt(b.urutan, 10) || 0));
-        memberFaqAllItems = activeItems;
-        renderMemberFaqAccordion();
+        const modulFaqPromises = modulsPromise.then(moduls => {
+          if (!Array.isArray(moduls) || moduls.length === 0) return;
+          return Promise.all(moduls.map(m => {
+            return cachedApiCall_('apiFaqList', { modul_id: m.modul_id })
+              .then(res => {
+                if (res && res.ok && Array.isArray(res.data?.items)) {
+                  let hasNew = false;
+                  res.data.items.forEach(it => {
+                    if (it && it.faq_id && !combinedMap.has(it.faq_id)) {
+                      combinedMap.set(it.faq_id, it);
+                      hasNew = true;
+                    }
+                  });
+                  if (hasNew) {
+                    updateAndRenderMemberFaq_();
+                  }
+                }
+              })
+              .catch(() => {});
+          }));
+        });
+
+        await Promise.allSettled([umumPromise, modulFaqPromises]);
       } catch (err) {
         if (memberFaqLoadingTimer) {
           clearTimeout(memberFaqLoadingTimer);
@@ -6337,27 +6690,49 @@
     let adminMemberCache = [];
     let memberModulNamesCache = {};
 
-    async function fetchAllAdminAkses() {
-      let all = [];
-      let offset = 0;
-      let hasMore = true;
-      while (hasMore && offset < 200) {
-        const res = await apiCall('apiAdminAksesList', { offset: offset, limit: 20 });
-        if (!res || !res.ok) break;
-        const items = res.data?.items || [];
-        all.push(...items);
-        hasMore = res.data?.has_more === true && items.length > 0;
-        offset += 20;
+    async function fetchAllAdminAkses(forceRefresh = false) {
+      // Panggil halaman pertama (offset 0)
+      const firstRes = await cachedApiCall_('apiAdminAksesList', { offset: 0, limit: 20 }, { force: forceRefresh });
+      if (!firstRes || !firstRes.ok) return [];
+
+      const firstItems = firstRes.data?.items || [];
+      const total = typeof firstRes.data?.total === 'number' ? firstRes.data.total : firstItems.length;
+      const hasMore = firstRes.data?.has_more === true && firstItems.length > 0;
+
+      if (!hasMore || total <= 20) {
+        return firstItems;
       }
-      return all;
+
+      const allItems = [...firstItems];
+      const remainingOffsets = [];
+      // Ambil halaman berikutnya (offset 20, 40, dst) dengan batas maksimal 200
+      for (let off = 20; off < total && off < 200; off += 20) {
+        remainingOffsets.push(off);
+      }
+
+      // Ambil halaman sisanya secara paralel (maksimal 4 sekaligus)
+      const CHUNK_SIZE = 4;
+      for (let i = 0; i < remainingOffsets.length; i += CHUNK_SIZE) {
+        const chunk = remainingOffsets.slice(i, i + CHUNK_SIZE);
+        const chunkResults = await Promise.all(
+          chunk.map(off => cachedApiCall_('apiAdminAksesList', { offset: off, limit: 20 }, { force: forceRefresh }))
+        );
+        chunkResults.forEach(r => {
+          if (r && r.ok && r.data && Array.isArray(r.data.items)) {
+            allItems.push(...r.data.items);
+          }
+        });
+      }
+
+      return allItems;
     }
 
-    async function ensureAdminModulsCache() {
-      if (window.adminModulCache && Array.isArray(window.adminModulCache) && window.adminModulCache.length > 0) {
+    async function ensureAdminModulsCache(forceRefresh = false) {
+      if (!forceRefresh && window.adminModulCache && Array.isArray(window.adminModulCache) && window.adminModulCache.length > 0) {
         return window.adminModulCache;
       }
       try {
-        const mRes = await apiCall('apiModulList');
+        const mRes = await cachedApiCall_('apiModulList', {}, { force: forceRefresh });
         if (mRes && mRes.ok && mRes.data && Array.isArray(mRes.data.moduls)) {
           window.adminModulCache = mRes.data.moduls;
           return mRes.data.moduls;
@@ -6379,18 +6754,29 @@
       }
     }
 
-    async function loadAdminMembers() {
+    async function loadAdminMembers(forceRefresh = false) {
       const searchInput = document.getElementById('admin-search-member');
       const search = searchInput ? searchInput.value.trim() : '';
       const tbody = document.getElementById('admin-member-tbody');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--asix-text-muted);">Memuat data member & modul...</td></tr>';
+
+      const isCached = !forceRefresh && hasFreshApiCache_('apiAdminMemberList', { cari: search, limit: 50 });
+      if (!isCached) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--asix-text-muted);">Memuat data member & modul...</td></tr>';
+      }
+
+      if (forceRefresh) {
+        clearApiCacheByAction_('apiAdminMemberList');
+        clearApiCacheByAction_('apiAdminPaketList');
+        clearApiCacheByAction_('apiAdminAksesList');
+        window.adminModulCache = null;
+      }
 
       const [mRes, pRes, allAkses, allModuls] = await Promise.all([
-        apiCall('apiAdminMemberList', { cari: search, limit: 50 }),
-        apiCall('apiAdminPaketList'),
-        fetchAllAdminAkses(),
-        ensureAdminModulsCache()
+        cachedApiCall_('apiAdminMemberList', { cari: search, limit: 50 }, { force: forceRefresh }),
+        cachedApiCall_('apiAdminPaketList', {}, { force: forceRefresh }),
+        fetchAllAdminAkses(forceRefresh),
+        ensureAdminModulsCache(forceRefresh)
       ]);
 
       if (!mRes || !mRes.ok) {
@@ -6719,14 +7105,22 @@
      */
     let adminPaketCache = [];
 
-    async function loadAdminPaket() {
+    async function loadAdminPaket(forceRefresh = false) {
       if (!currentAuthUser || currentAuthUser.role !== 'super_admin') return;
 
       const tbody = document.getElementById('admin-paket-tbody');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--asix-text-muted);">Memuat daftar paket...</td></tr>';
 
-      const res = await apiCall('apiAdminPaketList');
+      const isCached = !forceRefresh && hasFreshApiCache_('apiAdminPaketList');
+      if (!isCached) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--asix-text-muted);">Memuat daftar paket...</td></tr>';
+      }
+
+      if (forceRefresh) {
+        clearApiCacheByAction_('apiAdminPaketList');
+      }
+
+      const res = await cachedApiCall_('apiAdminPaketList', {}, { force: forceRefresh });
       if (!res.ok) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--asix-danger);">${escapeHtml(res.error || 'Gagal memuat daftar paket.')}</td></tr>`;
         showToast(res.error || 'Gagal memuat paket.');
@@ -7018,12 +7412,12 @@
     let isSavingAturPaket = false;
     let aturPaketReqSequence = 0;
 
-    async function ensureAdminMembersCache() {
-      if (window.adminMemberCacheAll && Array.isArray(window.adminMemberCacheAll) && window.adminMemberCacheAll.length > 0) {
+    async function ensureAdminMembersCache(forceRefresh = false) {
+      if (!forceRefresh && window.adminMemberCacheAll && Array.isArray(window.adminMemberCacheAll) && window.adminMemberCacheAll.length > 0) {
         return window.adminMemberCacheAll;
       }
       try {
-        const res = await apiCall('apiAdminMemberList', { limit: 100 });
+        const res = await cachedApiCall_('apiAdminMemberList', { limit: 100 }, { force: forceRefresh });
         if (res && res.ok && res.data && Array.isArray(res.data.items)) {
           window.adminMemberCacheAll = res.data.items;
           return res.data.items;
@@ -7034,20 +7428,29 @@
       return [];
     }
 
-    async function loadAdminAktivasi() {
+    async function loadAdminAktivasi(forceRefresh = false) {
       const tbody = document.getElementById('admin-akses-tbody');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--asix-text-muted);">Memuat riwayat aktivasi...</td></tr>';
+
+      const isCached = !forceRefresh && hasFreshApiCache_('apiAdminAksesList', { limit: 50 });
+      if (!isCached) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--asix-text-muted);">Memuat riwayat aktivasi...</td></tr>';
+      }
+
+      if (forceRefresh) {
+        clearApiCacheByAction_('apiAdminAksesList');
+        window.adminMemberCacheAll = null;
+      }
 
       let res;
       try {
         const [aksesRes] = await Promise.all([
-          apiCall('apiAdminAksesList', { limit: 50 }),
-          ensureAdminMembersCache()
+          cachedApiCall_('apiAdminAksesList', { limit: 50 }, { force: forceRefresh }),
+          ensureAdminMembersCache(forceRefresh)
         ]);
         res = aksesRes;
       } catch (e) {
-        res = await apiCall('apiAdminAksesList', { limit: 50 });
+        res = await cachedApiCall_('apiAdminAksesList', { limit: 50 }, { force: forceRefresh });
       }
 
       if (!res || !res.ok) {
@@ -7840,7 +8243,7 @@
     /**
      * Memuat daftar seluruh modul dan status hak akses admin
      */
-    async function loadAdminModulMateri() {
+    async function loadAdminModulMateri(forceRefresh = false) {
       const isSuperAdmin = currentAuthUser && currentAuthUser.role === 'super_admin';
       const btnAddModul = document.getElementById('btn-admin-add-modul');
       if (btnAddModul) {
@@ -7849,9 +8252,18 @@
 
       const container = document.getElementById('admin-modul-materi-list');
       if (!container) return;
-      container.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--asix-text-muted);">Memuat daftar modul & materi...</div>';
 
-      const res = await apiCall('apiModulList');
+      const isCached = !forceRefresh && hasFreshApiCache_('apiModulList');
+      if (!isCached) {
+        container.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--asix-text-muted);">Memuat daftar modul & materi...</div>';
+      }
+
+      if (forceRefresh) {
+        clearApiCacheByAction_('apiModulList');
+        window.adminModulCache = null;
+      }
+
+      const res = await cachedApiCall_('apiModulList', {}, { force: forceRefresh });
       if (!res.ok) {
         container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--asix-danger);">Gagal memuat modul: ${escapeHtml(res.error || 'Terjadi kesalahan sistem.')}</div>`;
         showToast(res.error || 'Gagal memuat modul.');
@@ -8453,18 +8865,28 @@
       }
     }
 
-    async function loadAdminKonten() {
+    async function loadAdminKonten(forceRefresh = false) {
       const tbody = document.getElementById('admin-konten-tbody');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--asix-text-muted);">Memuat data konten...</td></tr>';
 
       const offset = (adminKontenPage - 1) * KONTEN_PAGE_SIZE;
-      const res = await apiCall('apiKontenList', {
+      const params = {
         panel: adminKontenFilterPanel,
         cari: adminKontenSearchQuery,
         limit: KONTEN_PAGE_SIZE,
         offset: offset
-      });
+      };
+
+      const isCached = !forceRefresh && hasFreshApiCache_('apiKontenList', params);
+      if (!isCached) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--asix-text-muted);">Memuat data konten...</td></tr>';
+      }
+
+      if (forceRefresh) {
+        clearApiCacheByAction_('apiKontenList');
+      }
+
+      const res = await cachedApiCall_('apiKontenList', params, { force: forceRefresh });
 
       if (!res.ok) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--asix-danger);">${escapeHtml(res.error || 'Gagal memuat konten.')}</td></tr>`;
@@ -8739,63 +9161,112 @@
     let adminFaqSearchQuery = '';
     let adminFaqSearchTimeout = null;
 
-    async function loadAdminFaq() {
+    async function loadAdminFaq(forceRefresh = false) {
       const tbody = document.getElementById('admin-faq-tbody');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 24px; color: var(--asix-text-muted);">Memuat daftar FAQ...</td></tr>';
 
-      // Pastikan modul termuat untuk opsi dropdown filter & label modul
-      if (!window.adminModulCache || window.adminModulCache.length === 0) {
-        try {
-          const mRes = await apiCall('apiModulList');
-          if (mRes.ok && mRes.data && mRes.data.moduls) {
-            window.adminModulCache = mRes.data.moduls;
-          }
-        } catch (e) {
-          console.warn('Gagal memuat modul:', e);
+      const isFilterUmum = adminFaqFilterModul === '__UMUM__';
+      let hasCached = false;
+      if (!forceRefresh) {
+        if (isFilterUmum) {
+          hasCached = hasFreshApiCache_('apiFaqList', { modul_id: '' });
+        } else if (adminFaqFilterModul) {
+          hasCached = hasFreshApiCache_('apiFaqList', { modul_id: adminFaqFilterModul });
+        } else {
+          hasCached = hasFreshApiCache_('apiFaqList', { modul_id: '' });
         }
       }
 
-      populateFaqModulOptions('admin-faq-filter-modul', true);
+      if (!hasCached && (!adminFaqAllItems || adminFaqAllItems.length === 0)) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 24px; color: var(--asix-text-muted);">Memuat daftar FAQ...</td></tr>';
+      }
+
+      if (forceRefresh) {
+        clearApiCacheByAction_('apiFaqList');
+        clearApiCacheByAction_('apiModulList');
+        window.adminModulCache = null;
+      }
+
+      // Pastikan modul termuat: Pakai cache modul yang ada tanpa memblokir FAQ
+      if (window.adminModulCache && Array.isArray(window.adminModulCache) && window.adminModulCache.length > 0) {
+        populateFaqModulOptions('admin-faq-filter-modul', true);
+      } else {
+        cachedApiCall_('apiModulList', {}, { force: forceRefresh }).then(mRes => {
+          if (mRes && mRes.ok && mRes.data && Array.isArray(mRes.data.moduls)) {
+            window.adminModulCache = mRes.data.moduls;
+            populateFaqModulOptions('admin-faq-filter-modul', true);
+          }
+        }).catch(() => {});
+      }
 
       try {
-        let rawItems = [];
-        if (adminFaqFilterModul === '__UMUM__') {
-          const res = await apiCall('apiFaqList', { modul_id: '' });
+        if (isFilterUmum) {
+          const res = await cachedApiCall_('apiFaqList', { modul_id: '' }, { force: forceRefresh });
           if (!res.ok) throw new Error(res.error || 'Gagal memuat FAQ umum.');
-          rawItems = res.data.items || [];
-        } else if (adminFaqFilterModul) {
-          const res = await apiCall('apiFaqList', { modul_id: adminFaqFilterModul });
-          if (!res.ok) throw new Error(res.error || 'Gagal memuat FAQ modul.');
-          rawItems = res.data.items || [];
-        } else {
-          // "Semua": Ambil FAQ umum + semua modul via Promise.all
-          const moduls = window.adminModulCache || [];
-          const promises = [
-            apiCall('apiFaqList', { modul_id: '' }),
-            ...moduls.map(m => apiCall('apiFaqList', { modul_id: m.modul_id }))
-          ];
-          const results = await Promise.all(promises);
-          const combined = [];
-          const seenIds = new Set();
-          results.forEach(r => {
-            if (r.ok && r.data && Array.isArray(r.data.items)) {
-              r.data.items.forEach(item => {
-                if (!seenIds.has(item.faq_id)) {
-                  seenIds.add(item.faq_id);
-                  combined.push(item);
-                }
-              });
-            }
-          });
-          rawItems = combined;
+          const items = (res.data.items || []).slice();
+          items.sort((a, b) => (parseInt(a.urutan, 10) || 0) - (parseInt(b.urutan, 10) || 0));
+          adminFaqAllItems = items;
+          applyAdminFaqFilterAndRender();
+          return;
         }
 
-        // Urutkan dari angka urutan terkecil
-        rawItems.sort((a, b) => (parseInt(a.urutan, 10) || 0) - (parseInt(b.urutan, 10) || 0));
-        adminFaqAllItems = rawItems;
+        if (adminFaqFilterModul) {
+          const res = await cachedApiCall_('apiFaqList', { modul_id: adminFaqFilterModul }, { force: forceRefresh });
+          if (!res.ok) throw new Error(res.error || 'Gagal memuat FAQ modul.');
+          const items = (res.data.items || []).slice();
+          items.sort((a, b) => (parseInt(a.urutan, 10) || 0) - (parseInt(b.urutan, 10) || 0));
+          adminFaqAllItems = items;
+          applyAdminFaqFilterAndRender();
+          return;
+        }
 
-        applyAdminFaqFilterAndRender();
+        // Filter "Semua Modul & Umum": Tampilkan bertahap (Umum dulu, lalu modul ditambahkan saat datang)
+        const combinedMap = new Map();
+
+        function updateAndRenderAdminFaq_() {
+          const sorted = Array.from(combinedMap.values());
+          sorted.sort((a, b) => (parseInt(a.urutan, 10) || 0) - (parseInt(b.urutan, 10) || 0));
+          adminFaqAllItems = sorted;
+          applyAdminFaqFilterAndRender();
+        }
+
+        const umumPromise = cachedApiCall_('apiFaqList', { modul_id: '' }, { force: forceRefresh })
+          .then(res => {
+            if (res && res.ok && Array.isArray(res.data?.items)) {
+              res.data.items.forEach(it => {
+                if (it && it.faq_id) combinedMap.set(it.faq_id, it);
+              });
+              updateAndRenderAdminFaq_();
+            }
+          });
+
+        const modulsPromise = (window.adminModulCache && window.adminModulCache.length > 0)
+          ? Promise.resolve(window.adminModulCache)
+          : cachedApiCall_('apiModulList', {}, { force: forceRefresh }).then(r => (r && r.ok && r.data?.moduls) ? r.data.moduls : []);
+
+        const modulFaqPromises = modulsPromise.then(moduls => {
+          if (!Array.isArray(moduls) || moduls.length === 0) return;
+          return Promise.all(moduls.map(m => {
+            return cachedApiCall_('apiFaqList', { modul_id: m.modul_id }, { force: forceRefresh })
+              .then(res => {
+                if (res && res.ok && Array.isArray(res.data?.items)) {
+                  let hasNew = false;
+                  res.data.items.forEach(it => {
+                    if (it && it.faq_id && !combinedMap.has(it.faq_id)) {
+                      combinedMap.set(it.faq_id, it);
+                      hasNew = true;
+                    }
+                  });
+                  if (hasNew) {
+                    updateAndRenderAdminFaq_();
+                  }
+                }
+              })
+              .catch(() => {});
+          }));
+        });
+
+        await Promise.allSettled([umumPromise, modulFaqPromises]);
       } catch (err) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 24px; color: var(--asix-danger);">Gagal memuat FAQ: ${escapeHtml(err.message)}</td></tr>`;
       }
@@ -9171,13 +9642,21 @@
       renderAdminTestimoniTable(filtered);
     }
 
-    async function loadAdminTestimoni() {
+    async function loadAdminTestimoni(forceRefresh = false) {
       const tbody = document.getElementById('admin-testimoni-tbody');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--asix-text-muted);">Memuat data testimoni...</td></tr>';
+
+      const isCached = !forceRefresh && hasFreshApiCache_('apiKontenList', { panel: 'testimoni', limit: 50 });
+      if (!isCached) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--asix-text-muted);">Memuat data testimoni...</td></tr>';
+      }
+
+      if (forceRefresh) {
+        clearApiCacheByAction_('apiKontenList');
+      }
 
       try {
-        const res = await apiCall('apiKontenList', { panel: 'testimoni', limit: 50 });
+        const res = await cachedApiCall_('apiKontenList', { panel: 'testimoni', limit: 50 }, { force: forceRefresh });
         if (!res.ok) {
           tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--asix-danger);">${escapeHtml(res.error || 'Gagal memuat testimoni.')}</td></tr>`;
           return;
